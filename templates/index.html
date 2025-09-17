@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Test</title>
+    <script>
+        async function getDoubledValue() {
+            const inputValue = document.getElementById("inputValue").value;
+            const response = await fetch(`/double/${inputValue}`);
+            const data = await response.json();
+            document.getElementById("result").innerText = `Resultado: ${data.result}`;
+        }
+    </script>
+</head>
+<body>
+    <h1>Digite um número</h1>
+    <input type="number" id="inputValue">
+    <button onclick="getDoubledValue()">Enviar</button>
+    <p id="result"></p>
+</body>
+</html>
