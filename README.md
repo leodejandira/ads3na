@@ -200,4 +200,4 @@ git push origin gustavodev
 
 > Para alterações funcionais, realize o commit para a sua branch, bem como para a branch de homolog.
 
-> As cargas de homolog subirão para a branch mastes ao final de cada sprint.
+> As cargas de homolog subirão para a branch mastes ao final de cada sprint. 
