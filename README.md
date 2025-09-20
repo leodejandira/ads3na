@@ -65,13 +65,13 @@ O Docker precisa que o WSL esteja atualizado.
 
 Após instalar o Chocolatey, execute no PowerShell como Administrador:  
 
-    ```powershell
+    ```
     choco install make -y
     ```
 
 Verifique:
 
-    ```Bash
+    ```
     wsl --update
     ```
 
@@ -79,13 +79,13 @@ Verifique:
 
 No Ubuntu/Debian:
 
-    ```Bash
+    ```
     sudo apt update && sudo apt install build-essential -y
     ```
 
 No macOS (usando Homebrew):
 
-    ```Bash
+    ```
     brew install make
     ```
 
