@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
+
 @app.get("/double/{value}")
 async def double_value(value: int):
     return {"result": value * 2}

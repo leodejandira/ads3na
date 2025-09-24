@@ -1,0 +1,8 @@
+black
+isort
+flake8
+pytest
+radon
+pytest
+bandit
+coverage
