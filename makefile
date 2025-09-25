@@ -6,7 +6,6 @@ PORT=8000
 # 2: Rodar a pipeline via comando `make pr-pipeline`
 
 
-
 check-docker:
 	@docker info > /dev/null 2>&1 || (echo "Docker não está rodando. Iniciando o Docker..."; open -a Docker && sleep 5 && docker info > /dev/null 2>&1 || (echo "Falha ao iniciar o Docker. Por favor, inicie o Docker manualmente." && exit 1))
 
