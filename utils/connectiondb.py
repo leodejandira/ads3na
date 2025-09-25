@@ -1,27 +1,38 @@
+import os
 from supabase import create_client, Client
+from dotenv import load_dotenv
 
-url: str = "https://hdgcquzcfbbwqufznatb.supabase.co"
-key: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZ2NxdXpjZmJid3F1ZnpuYXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MjY2NDMsImV4cCI6MjA3NDIwMjY0M30.7r9RNPhoGT4UJdolJFsDmaftbApKTg61DKgOcchkRWY"
-supabase: Client = create_client(url, key)
+# Carregar variáveis de ambiente
+load_dotenv()
 
-# login do usuário
-auth_response = supabase.auth.sign_in_with_password({
-    "email": "frank.miranda12@hotmail.com",
-    "password": "host8899"
-})
+url: str = os.getenv("SUPABASE_URL")
+key: str = os.getenv("SUPABASE_KEY")
 
-print(auth_response)
+def get_client() -> Client:
+    '''
+    '''
+    supabase: Client = create_client(url, key)
+    print("✅ Conexão com o Supabase estabelecida com sucesso!")
+    return supabase
 
-#registrando usuario novo
-signup_response = supabase.auth.sign_up({
-    "email": "novo@exemplo.com",
-    "password": "senha123"
-})
+def print_tabelinha():
+    supabase = get_client()
+    
+    # Buscar todos os registros da tabela 'tabelinha'
+    # Adicionando a linha '.limit(10)' para garantir que ele busque algo
+    response = supabase.table("tabelinha").select("*").limit(10).execute()
+    
+    print("\n📌 Registros na tabela 'tabelinha':")
+    
+    # Acessa a lista de dados
+    registros = response.data
+    
+    # Verifica se a lista de registros não está vazia
+    if len(registros) > 0:
+        for registro in registros:
+            print(registro)
+    else:
+        print("⚠️ Nenhum registro encontrado na tabela.")
 
-print(signup_response)
-
-#token para acessar tabelas protegidas
-session = auth_response.session
-access_token = session.access_token
-
-print("Token JWT:", access_token)
+if __name__ == "__main__":
+    print_tabelinha()
