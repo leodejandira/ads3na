@@ -1,1 +1,44 @@
+Arquivos de Bytecode e Cache do Python
+pycache/
+*.pyc
+*.pyo
+*.pyd
+
+Pastas de Ambiente Virtual
+Nunca envie seu ambiente virtual para o repositório!
+.venv
+venv
+env
+ENV
+
+Arquivos de Dependências e Distribuição
+*.egg-info/
+build/
+dist/
+wheels/
+pip-wheel-metadata/
+
+Arquivos de Configuração de IDEs e Editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+Arquivos Sensíveis de Ambiente
+IMPORTANTE: Mantenha suas senhas e chaves de API fora do Git!
 .env
+.env
+.env.
+
+Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
+
+Arquivos de Log
+*.log
+logs/
+
+Arquivos de Teste e Cobertura de Código
+.pytest_cache/
+.coverage
+htmlcov/
