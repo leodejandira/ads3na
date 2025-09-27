@@ -205,3 +205,18 @@ git push origin gustavodev
 > Pipeline para homologação
 > 1: Instalar as dependenvias como o comando `install-dep` 
 > 2: Rodar a pipeline via comando `make pr-pipeline`
+
+*** Refatoração e Melhorias de Arquitetura
+* Principais Mudanças Implementadas
+Organização do Código: O código da aplicação foi todo movido para dentro da pasta app/ para melhor organização.
+
+Configuração do Banco de Dados: A lógica de conexão com o banco de dados foi centralizada na nova pasta db/.
+
+Estrutura de Pacotes Python: Foram adicionados arquivos __init__.py em todas as pastas para melhorar os imports.
+
+Otimização: Foram criados os arquivos .dockerignore e .gitignore para otimizar a imagem Docker e manter o repositório limpo.
+
+Segurança: As senhas e tokens (como do Supabase) foram movidos para um arquivo .env para não ficarem expostos no código.
+
+Arquitetura: Foi criada a pasta models/ para separar a representação das tabelas do banco de dados.
+
