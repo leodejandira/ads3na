@@ -218,5 +218,5 @@ git push origin gustavodev
 
 5. Segurança: As senhas e tokens (como do Supabase) foram movidos para um arquivo .env para não ficarem expostos no código.
 
-Arquitetura: Foi criada a pasta models/ para separar a representação das tabelas do banco de dados.
+6. Arquitetura: Foi criada a pasta models/ para separar a representação das tabelas do banco de dados.
 
