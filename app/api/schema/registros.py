@@ -2,12 +2,15 @@ from pydantic import BaseModel
 
 
 class RegistroCreate(BaseModel):
-    valor: str
+    name: str
+    email: str
 
 
 class Registro(BaseModel):
     id: int
-    valor: str
+    name: str
+    email: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
