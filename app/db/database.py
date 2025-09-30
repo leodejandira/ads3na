@@ -16,11 +16,11 @@ def get_client() -> Client:
     return supabase
 
 
-def print_tabelinha():
+def print_db():
     supabase = get_client()
-    response = supabase.table("tabelinha").select("*").limit(10).execute()
+    response = supabase.table("users").select("*").limit(10).execute()
 
-    print("\n📌 Registros na tabela 'tabelinha':")
+    print("\n📌 Registros da tabela:")
     registros = response.data
 
     if len(registros) > 0:
@@ -31,4 +31,4 @@ def print_tabelinha():
 
 
 if __name__ == "__main__":
-    print_tabelinha()
+    print_db()
