@@ -25,6 +25,24 @@ docker-run: docker-stop
 
 
 
+check-docker-win:
+	@docker info >nul 2>&1 || (echo Docker não está rodando. Por favor, inicie o Docker Desktop manualmente. && exit 1)
+
+
+docker-build-win: check-docker-win
+	docker build -t $(APP_NAME) .
+
+
+docker-stop-win:
+	@echo Parando e removendo container '$(APP_NAME)' se existir...
+	-@docker stop $(APP_NAME) >nul 2>&1 || exit 0
+	-@docker rm $(APP_NAME) >nul 2>&1 || exit 0
+
+
+docker-run-win: docker-stop-win
+	docker run -d -p $(PORT):8000 --name $(APP_NAME) $(APP_NAME)
+
+
 format:
 	black .
 	isort .
@@ -57,4 +75,8 @@ clean:
 
 
 pr-pipeline: lint format bandit radon docker-build docker-run
+	@echo "Pipeline concluída com sucesso! Pronto para homologação."
+
+
+pr-pipeline-win: lint format bandit radon docker-build-win docker-run-win
 	@echo "Pipeline concluída com sucesso! Pronto para homologação."
