@@ -36,8 +36,12 @@ def listar_registros() -> List[Registro]:
 def buscar_registro(registro_id: int) -> Optional[Registro]:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+<<<<<<< HEAD:api/services/registros.py
     cursor.execute("SELECT id, valor FROM registros WHERE id = ?",
                    (registro_id,))
+=======
+    cursor.execute("SELECT id, valor FROM registros WHERE id = ?", (registro_id))
+>>>>>>> 62ec72648ea717c5f686acf86d3b92abcca5b993:app/api/services/registros.py
     row = cursor.fetchone()
     conn.close()
     if row:

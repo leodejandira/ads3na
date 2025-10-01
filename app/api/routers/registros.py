@@ -1,10 +1,9 @@
 # api/routers/registros.py
 from typing import List
 
-from fastapi import APIRouter, HTTPException
-
 from api.schema.registros import Registro, RegistroCreate
 from api.services import registros as service
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter(prefix="/api/registros", tags=["Registros"])
 
