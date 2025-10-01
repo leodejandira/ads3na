@@ -1,38 +1,36 @@
 import os
-from supabase import create_client, Client
-from dotenv import load_dotenv
 
-# Carregar variáveis de ambiente
+from dotenv import load_dotenv
+from supabase import Client, create_client
+
+"""
+Demonstração de autenticação no Supabase.
+
+Este script inicializa o cliente Supabase usando variáveis de ambiente e
+executa dois métodos principais de autenticação: login (sign_in_with_password)
+e cadastro (sign_up). Ele também extrai e exibe o Token JWT da sessão de login.
+"""
+
 load_dotenv()
 
 url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_KEY")
 
-def get_client() -> Client:
-    '''
-    '''
-    supabase: Client = create_client(url, key)
-    print("✅ Conexão com o Supabase estabelecida com sucesso!")
-    return supabase
+supabase: Client = create_client(url, key)
 
-def print_tabelinha():
-    supabase = get_client()
-    
-    # Buscar todos os registros da tabela 'tabelinha'
-    # Adicionando a linha '.limit(10)' para garantir que ele busque algo
-    response = supabase.table("tabelinha").select("*").limit(10).execute()
-    
-    print("\n📌 Registros na tabela 'tabelinha':")
-    
-    # Acessa a lista de dados
-    registros = response.data
-    
-    # Verifica se a lista de registros não está vazia
-    if len(registros) > 0:
-        for registro in registros:
-            print(registro)
-    else:
-        print("⚠️ Nenhum registro encontrado na tabela.")
+auth_response = supabase.auth.sign_in_with_password(
+    {"email": "frank.miranda12@hotmail.com", "password": "host8899"}
+)
 
-if __name__ == "__main__":
-    print_tabelinha()
+print(auth_response)
+
+signup_response = supabase.auth.sign_up(
+    {"email": "novo@exemplo.com", "password": "senha123"}
+)
+
+print(signup_response)
+
+session = auth_response.session
+access_token = session.access_token
+
+print("Token JWT:", access_token)
