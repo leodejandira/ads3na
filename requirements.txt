@@ -1,6 +1,8 @@
 fastapi
 uvicorn
 jinja2
-pydantic
+pydantic[email]>=2.0
 supabase
 python-dotenv
+passlib[bcrypt]
+python-multipart

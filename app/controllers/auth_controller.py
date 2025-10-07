@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from ..api.services.auth_service import login
-from ...utils.dbfunctions import inserir_registro
-from ads3na.app.api.schema.registros import RegistroCreate
+from api.services.auth_service import login
+from utils.dbfunctions import inserir_registro
+from api.schema.registros import RegistroCreate
 import jwt
 
 router = APIRouter()

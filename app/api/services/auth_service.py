@@ -1,7 +1,7 @@
 import jwt
 from datetime import datetime,  timedelta, timezone
 from passlib.hash import bcrypt
-from ....utils.dbfunctions import buscar_por_email
+from utils.dbfunctions import buscar_por_email
 from fastapi import HTTPException
 
 

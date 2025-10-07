@@ -2,8 +2,8 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 
-from ads3na.app.api.schema.registros import Registro, RegistroCreate
-from ads3na.app.db.database import get_client
+from api.schema.registros import Registro, RegistroCreate
+from db.database import get_client
 from passlib.hash import bcrypt
 
 TABLE_NAME = "users"
