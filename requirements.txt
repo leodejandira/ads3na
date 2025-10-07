@@ -4,3 +4,8 @@ jinja2
 pydantic
 supabase
 python-dotenv
+fastapi
+uvicorn
+python-jose[cryptography]
+python-multipart
+Jinja2
