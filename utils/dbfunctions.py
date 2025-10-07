@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 from ads3na.app.api.schema.registros import Registro, RegistroCreate
 from ads3na.app.db.database import get_client
+from passlib.hash import bcrypt
 
 TABLE_NAME = "users"
 
@@ -48,30 +49,30 @@ def buscar_registro(
 
 def inserir_registro(data: RegistroCreate) -> Registro:
     """
-    função responsavel por inserir usuarios na tabela.
+    Função responsável por inserir usuários na tabela.
 
-    parametro de entrada: objeto contendo nome e email
+    Parâmetro de entrada: objeto RegistroCreate contendo
+    name, email, senha e role.
 
-    ex:     novo_registro = RegistroCreate(
-                name="Frank",
-                email="frank.miranda12@hotmail.com"
-            )
-
-    adicione esse objeto ao chamar a função.
-
-
-    retorno: Objeto Registro criado
-
+    Retorno: Objeto Registro criado
     """
 
     supabase = get_client()
+    senha_hash = bcrypt.hash(data.senha)
     response = (
         supabase.table(TABLE_NAME)
-        .insert({"name": data.name, "email": data.email})
+        .insert({
+            "name": data.name,
+            "email": data.email,
+            "senha_hash": senha_hash,
+            "role": data.role,
+            "ativo": True
+        })
         .execute()
     )
 
     return Registro(**response.data[0])
+
 
 
 def atualizar_registro(registro_id: int, name: str, email: str) -> Registro:
@@ -119,5 +120,12 @@ def deletar_registro(registro_id: int) -> None:
     return Registro(**response.data[0])
 
 
+def buscar_por_email(email: str):
+    supabase = get_client()
+    response = supabase.table(TABLE_NAME).select("*").eq("email",email).execute()
+    if response.data:
+        return response.data[0]
+    
+    return None
 
 
