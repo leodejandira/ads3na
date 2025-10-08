@@ -13,6 +13,22 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 def gerar_token(user):
+    """
+    Gera token JWT para autenticação de acesso às rotas de gerente ou usuário.
+
+    O token contém informações do usuário (ID, e-mail e papel)
+    e é válido por 60 minutos.
+
+    Args:
+        user (dict): Um dicionário contendo os dados do usuário.
+        Espera-se que tenha as chaves:
+            - "id": Identificador único do usuário.
+            - "email": Endereço de e-mail do usuário.
+            - "role": Papel do usuário no sistema (ex: 'gerente', 'usuario').
+
+    Returns:
+        str: Token JWT codificado como uma string.
+    """
     payload = {
         "sub": str(user["id"]),
         "email": user["email"],

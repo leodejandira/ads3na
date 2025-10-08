@@ -36,8 +36,7 @@ def listar_registros() -> List[Registro]:
 def buscar_registro(registro_id: int) -> Optional[Registro]:
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, valor FROM registros WHERE id = ?",
-                   (registro_id,))
+    cursor.execute("SELECT id, valor FROM registros WHERE id = ?", (registro_id,))
     row = cursor.fetchone()
     conn.close()
     if row:

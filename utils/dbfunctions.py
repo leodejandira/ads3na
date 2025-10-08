@@ -10,18 +10,28 @@ TABLE_NAME = "users"
 
 def listar_registros() -> List[Registro]:
     """
-    Função responsavel por listar todos os registros
-    da tabela users
-    não possui parametros de entrada, pois esta puxando tudo
-    com o * em select
+    Retorna todos os registros da tabela de usuários.
 
-    Retorno: Lista de objetos Registro
+    Não possui parametros de entrada, pois retorna todos os registros.
+
+    Raises:
+        HTTPException: Caso ocorra erro ao acessar o banco de dados.
+
+    Returns:
+        List[Registro]: Lista de objetos "Registro".
+        Retorna lista vazia caso não tenha registros.
 
     """
-    supabase = get_client()
-    response = supabase.table(TABLE_NAME).select("*").execute()
-    registros = response.data if response.data else []
-    return registros
+    try:
+        supabase = get_client()
+        response = supabase.table(TABLE_NAME).select("*").execute()
+        registros = response.data if response.data else []
+        return registros
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao listrar registros: {str(e)}"
+        )
 
 
 def buscar_registro(
@@ -31,62 +41,105 @@ def buscar_registro(
     Busca um registro no banco pelo ID.
 
     Parametros:
-    registro_id (int): Identificador único do registro a ser buscado.
+        registro_id (int): Identificador único do registro a ser buscado.
 
-    Returns:
-        Optional[Registro]: Objeto `Registro` contendo id, nome e email,
-        ou `None` caso não seja encontrado
+    Raises:
+        HTTPException: Caso ocorra erro ao acessar o banco de dados.
 
+    Retorno:
+        Optional[Registro]: Objeto "Registro" contendo os dados do registro,
+        ou "None" caso não seja encontrado.
     """
-    supabase = get_client()
-    response = supabase.table(TABLE_NAME).select("*").eq("id", registro_id).execute()
+    try:
+        supabase = get_client()
+        response = (
+            supabase.table(TABLE_NAME).select("*").eq("id", registro_id).execute()
+        )
 
-    if response.data:
-        return Registro(**response.data[0])
-    return None
+        if response.data:
+            return Registro(**response.data[0])
+        return None
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao buscar registro: {str(e)}"
+        )
 
 
 def inserir_registro(data: RegistroCreate) -> Registro:
     """
     Função responsável por inserir usuários na tabela.
 
-    Parâmetro de entrada: objeto RegistroCreate contendo
-    name, email, senha e role.
+    A senha fornecida é truncada em 72 caracteres, codificada em UTF-8 e
+    armazenada como um hash seguro.
 
-    Retorno: Objeto Registro criado
+    Parâmetro:
+       data (RegistroCreate): Objeto contendo os dados do usuário a ser criado,
+            incluindo name, email, senha e role.
+
+    Raises:
+        HTTPException: Caso ocorra algum erro ao inserir o registro no banco.
+            - 400: Caso exista e-mail duplicado no banco.
+
+    Retorno:
+        Objeto Registro criado
+
+    Notes:
+        - A senha é truncada para evitar problemas com o limite do bcrypt
+        (72 bytes).
     """
+    try:
+        supabase = get_client()
 
-    supabase = get_client()
-    senha_truncada = data.senha[:72]
-    print(f"Tamanho da senha (string): {len(senha_truncada)}")
-    senha_bytes = senha_truncada.encode("utf-8")
-    print(f"Tamanho da senha (bytes): {len(senha_bytes)}")
-    senha_hash = bcrypt.hash(senha_truncada)
-    # senha_hash = bcrypt.hash(data.senha)
-    response = (
-        supabase.table(TABLE_NAME)
-        .insert(
-            {
-                "name": data.name,
-                "email": data.email,
-                "senha_hash": senha_hash,
-                "role": data.role,
-                "ativo": True,
-            }
+        existing_user = buscar_por_email(data.email)
+        if existing_user is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="Já existe um usuário cadastrado com esse e-mail",
+            )
+        senha_truncada = data.senha[:72]
+        senha_hash = bcrypt.hash(senha_truncada)
+        response = (
+            supabase.table(TABLE_NAME)
+            .insert(
+                {
+                    "name": data.name,
+                    "email": data.email,
+                    "senha_hash": senha_hash,
+                    "role": data.role,
+                    "ativo": True,
+                }
+            )
+            .execute()
         )
-        .execute()
-    )
 
-    return Registro(**response.data[0])
+        if not response.data:
+            raise HTTPException(
+                status_code=500, detail="Falha ao inserir registro no banco de dados"
+            )
+
+        return Registro(**response.data[0])
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao inserir registro: {str(e)}"
+        )
 
 
 def atualizar_registro(registro_id: int, name: str, email: str) -> Registro:
     """
     função para atualizar registro de usuarios ja existente pelo id.
 
-    parametros: id, name, email.
+    parametros:
+        registro_id (int): Identificado unico do registro a ser atualizado
+        name (str): Novo nome do usuário
+        email (str): Novo e-mail do usuário.
 
-    retorno : Objeto Registro atualizado
+    Raises:
+        HTTPException: Se o registro com o ID informado não for encontrado.
+
+    retorno:
+        Objeto Registro atualizado
 
     """
 
@@ -106,13 +159,18 @@ def atualizar_registro(registro_id: int, name: str, email: str) -> Registro:
     return Registro(**response.data[0])
 
 
-def deletar_registro(registro_id: int) -> None:
+def deletar_registro(registro_id: int) -> Registro:
     """
     Função responsavel por deletar um usuario.
 
-    parametros: id
+    parametros:
+       registro_id (int): Identificado unico do registro a ser deletado
 
-    retorno: Objeto Registro deletado
+    Raises:
+        HTTPException: Se o registro com o ID informado não for encontrado.
+
+    retorno:
+        Objeto Registro deletado
     """
     supabase = get_client()
     response = supabase.table(TABLE_NAME).delete().eq("id", registro_id).execute()
@@ -126,6 +184,16 @@ def deletar_registro(registro_id: int) -> None:
 
 
 def buscar_por_email(email: str):
+    """
+    Busca um usuário pelo e-mail no banco de dados usando Supabase.
+
+    Parametros:
+        email (str): O endereço de e-mail do usuário a ser buscado.
+
+    Retorno:
+        dict | None: Dicionário com os dados do usuário caso encontrado,
+        ou None se não exister
+    """
     supabase = get_client()
     response = supabase.table(TABLE_NAME).select("*").eq("email", email).execute()
     if response.data:
