@@ -13,18 +13,57 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 def gerar_token(user):
-    payload = {
+    """
+    Gera um token JWT para autenticação de acesso às rotas de gerente ou usuário.
+
+    O token contém informações do usuário (ID, e-mail e papel) e é válido por 60 minutos.
+
+    Args:
+        user (dict): Um dicionário contendo os dados do usuário. Espera-se que tenha as chaves:
+            - "id": Identificador único do usuário.
+            - "email": Endereço de e-mail do usuário.
+            - "role": Papel do usuário no sistema (ex: 'gerente', 'usuario').
+
+    Returns:
+        str: Token JWT codificado como uma string.
+    """
+    try:
+        payload = {
         "sub": str(user["id"]),
         "email": user["email"],
         "role": user["role"],
         "exp": datetime.now(tz=timezone.utc)
         + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-    }
-
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        }
+        token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        return token
+    
+    except KeyError as e:
+        raise HTTPException(
+            status_code = 400,
+            detail=f"Campo obrigatório ausente no usuário: {str(e)}"
+        )
 
 
 def login(email: str, senha: str):
+    """
+    Realiza o login de um usuário autenticando suas credenciais.
+
+    Verifica se o e-mail existe, se a senha está correta e se o usuário está ativo.
+    Em caso de sucesso, retorna um token JWT para autenticação.
+
+    Parametros:
+        email (str): Endereço de e-mail do usuário.
+        senha (str): Senha em texto plano fornecida pelo usuário.
+
+    Raises:
+        HTTPException: 
+            - 401 se as credenciais forem inválidas.
+            - 403 se o usuário estiver inativo.
+
+    Retorno:
+        str: Token JWT válido por 60 minutos.
+    """
     user = buscar_por_email(email)
     if not user or not bcrypt.verify(senha, user["senha_hash"]):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
