@@ -43,7 +43,9 @@ def gerar_token(user):
 def login(email: str, senha: str):
     user = buscar_por_email(email)
     if not user or not bcrypt.verify(senha, user["senha_hash"]):
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+        raise HTTPException(status_code=401,
+                            detail="Credenciais inválidas")
     if not user["ativo"]:
-        raise HTTPException(status_code=403, detail="Usuário inativo")
+        raise HTTPException(status_code=403,
+                            detail="Usuário inativo")
     return gerar_token(user)

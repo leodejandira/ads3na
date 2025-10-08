@@ -33,7 +33,8 @@ def register_route(novo_usuario: RegistroCreate):
 
     except Exception:
         raise HTTPException(
-            status_code=500, detail="Erro interno ao registrar o usuário."
+            status_code=500,
+            detail="Erro interno ao registrar o usuário."
         )
 
 
@@ -72,7 +73,8 @@ def login_route(form_data: OAuth2PasswordRequestForm = Depends()):
         raise http_err
 
     except Exception:
-        raise HTTPException(status_code=500, detail="Erro interno ao realizar login.")
+        raise HTTPException(status_code=500,
+                            detail="Erro interno ao realizar login.")
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -91,7 +93,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         contendo informações do usuário.
     """
     try:
-        payload = jwt.decode(token, "sua_chave_super_secreta", algorithms=["HS256"])
+        payload = jwt.decode(
+            token, "sua_chave_super_secreta",
+            algorithms=["HS256"])
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
@@ -115,7 +119,8 @@ def rota_gerente(user: dict = Depends(get_current_user)):
         dict: Mensagem de boas-vindas personalizada para o gerente.
     """
     if user["role"] != "gerente":
-        raise HTTPException(status_code=403, detail="Apenas gerentes podem acessar")
+        raise HTTPException(status_code=403,
+                            detail="Apenas gerentes podem acessar")
     return {"msg": f"Bem-vindo gerente {user['email']}"}
 
 
@@ -135,5 +140,6 @@ def rota_usuario(user: dict = Depends(get_current_user)):
         dict: Mensagem de boas-vindas personalizada para o usuário.
     """
     if user["role"] != "usuario":
-        raise HTTPException(status_code=403, detail="Apenas usuários podem acessar")
+        raise HTTPException(status_code=403,
+                            detail="Apenas usuários podem acessar")
     return {"msg": f"Bem-vindo usuário {user['email']}"}
