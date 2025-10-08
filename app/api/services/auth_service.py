@@ -15,9 +15,11 @@ def gerar_token(user):
         "sub": str(user["id"]),
         "email": user["email"],
         "role": user["role"],
-        "exp": datetime.now(tz=timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        "exp": datetime.now(tz=timezone.utc) + timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+            )
     }
-    
+
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -25,6 +27,6 @@ def login(email: str, senha: str):
     user = buscar_por_email(email)
     if not user or not bcrypt.verify(senha, user["senha_hash"]):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
-    if not user.ativo:
+    if not user["ativo"]:
         raise HTTPException(status_code=403, detail="Usuário inativo")
     return gerar_token(user)

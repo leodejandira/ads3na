@@ -8,9 +8,9 @@ import jwt
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+
 @router.post("/register")
-def register_route(name: str, email: str, senha: str, role: str):
-    novo_usuario = RegistroCreate(name=name, email=email, senha=senha, role=role)
+def register_route(novo_usuario: RegistroCreate):
     return inserir_registro(novo_usuario)
 
 

@@ -1,5 +1,4 @@
 from typing import List, Optional
-
 from fastapi import HTTPException
 
 from api.schema.registros import Registro, RegistroCreate
@@ -58,7 +57,12 @@ def inserir_registro(data: RegistroCreate) -> Registro:
     """
 
     supabase = get_client()
-    senha_hash = bcrypt.hash(data.senha)
+    senha_truncada = data.senha[:72]
+    print(f"Tamanho da senha (string): {len(senha_truncada)}")
+    senha_bytes = senha_truncada.encode('utf-8')
+    print(f"Tamanho da senha (bytes): {len(senha_bytes)}")
+    senha_hash = bcrypt.hash(senha_truncada)
+    # senha_hash = bcrypt.hash(data.senha)
     response = (
         supabase.table(TABLE_NAME)
         .insert({
