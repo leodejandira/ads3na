@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -6,8 +7,8 @@ from passlib.hash import bcrypt
 
 from utils.dbfunctions import buscar_por_email
 
-SECRET_KEY = "sua_chave_super_secreta"
-ALGORITHM = "HS256"
+SECRET_KEY = os.environ.get("SECRET_KEY")
+ALGORITHM = os.environ.get("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
