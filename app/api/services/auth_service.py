@@ -1,9 +1,10 @@
-import jwt
-from datetime import datetime,  timedelta, timezone
-from passlib.hash import bcrypt
-from utils.dbfunctions import buscar_por_email
-from fastapi import HTTPException
+from datetime import datetime, timedelta, timezone
 
+import jwt
+from fastapi import HTTPException
+from passlib.hash import bcrypt
+
+from utils.dbfunctions import buscar_por_email
 
 SECRET_KEY = "sua_chave_super_secreta"
 ALGORITHM = "HS256"
@@ -15,9 +16,8 @@ def gerar_token(user):
         "sub": str(user["id"]),
         "email": user["email"],
         "role": user["role"],
-        "exp": datetime.now(tz=timezone.utc) + timedelta(
-            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-            )
+        "exp": datetime.now(tz=timezone.utc)
+        + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     }
 
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)

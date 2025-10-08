@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from api.services.auth_service import login
-from utils.dbfunctions import inserir_registro
-from api.schema.registros import RegistroCreate
 import jwt
+from api.schema.registros import RegistroCreate
+from api.services.auth_service import login
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from utils.dbfunctions import inserir_registro
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -28,7 +29,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido")
-    
+
 
 @router.get("/rota-gerente")
 def rota_gerente(user: dict = Depends(get_current_user)):
@@ -42,5 +43,3 @@ def rota_usuario(user: dict = Depends(get_current_user)):
     if user["role"] != "usuario":
         raise HTTPException(status_code=403, detail="Apenas usuários podem acessar")
     return {"msg": f"Bem-vindo usuário {user['email']}"}
-
-

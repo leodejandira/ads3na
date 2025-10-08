@@ -1,16 +1,9 @@
 import os
 
-from dotenv import load_dotenv
 from supabase import Client, create_client
-from pathlib import Path
-
-
-
 
 url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_KEY")
-
-
 
 
 def get_client() -> Client:

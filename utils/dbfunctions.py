@@ -1,8 +1,8 @@
 from typing import List, Optional
-from fastapi import HTTPException
 
 from api.schema.registros import Registro, RegistroCreate
 from db.database import get_client
+from fastapi import HTTPException
 from passlib.hash import bcrypt
 
 TABLE_NAME = "users"
@@ -31,10 +31,10 @@ def buscar_registro(
     Busca um registro no banco pelo ID.
 
     Parametros:
-        registro_id (int): Identificador único do registro a ser buscado.
+    registro_id (int): Identificador único do registro a ser buscado.
 
     Returns:
-        Optional[Registro]: Objeto `Registro` contendo id, nome e email, 
+        Optional[Registro]: Objeto `Registro` contendo id, nome e email,
         ou `None` caso não seja encontrado
 
     """
@@ -59,24 +59,25 @@ def inserir_registro(data: RegistroCreate) -> Registro:
     supabase = get_client()
     senha_truncada = data.senha[:72]
     print(f"Tamanho da senha (string): {len(senha_truncada)}")
-    senha_bytes = senha_truncada.encode('utf-8')
+    senha_bytes = senha_truncada.encode("utf-8")
     print(f"Tamanho da senha (bytes): {len(senha_bytes)}")
     senha_hash = bcrypt.hash(senha_truncada)
     # senha_hash = bcrypt.hash(data.senha)
     response = (
         supabase.table(TABLE_NAME)
-        .insert({
-            "name": data.name,
-            "email": data.email,
-            "senha_hash": senha_hash,
-            "role": data.role,
-            "ativo": True
-        })
+        .insert(
+            {
+                "name": data.name,
+                "email": data.email,
+                "senha_hash": senha_hash,
+                "role": data.role,
+                "ativo": True,
+            }
+        )
         .execute()
     )
 
     return Registro(**response.data[0])
-
 
 
 def atualizar_registro(registro_id: int, name: str, email: str) -> Registro:
@@ -126,10 +127,8 @@ def deletar_registro(registro_id: int) -> None:
 
 def buscar_por_email(email: str):
     supabase = get_client()
-    response = supabase.table(TABLE_NAME).select("*").eq("email",email).execute()
+    response = supabase.table(TABLE_NAME).select("*").eq("email", email).execute()
     if response.data:
         return response.data[0]
-    
+
     return None
-
-

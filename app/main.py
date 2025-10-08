@@ -1,5 +1,4 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
 
 from app.controllers import auth_controller
@@ -15,6 +14,8 @@ templates = Jinja2Templates(directory="templates")
 
 
 app.include_router(auth_controller.router, tags=["Autenticação"])
+
+
 @app.get("/")
 def read_root():
     return {"message": "API está no ar!"}
