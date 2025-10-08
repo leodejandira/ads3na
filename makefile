@@ -1,5 +1,7 @@
 APP_NAME=minha-api
 PORT=8000
+SHELL := cmd.exe
+
 
 # Pipeline para homologação
 # 1: Instalar as dependencias como o comando `make install-dep` 

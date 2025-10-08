@@ -1,18 +1,19 @@
-# Usar imagem base com Python
 FROM python:3.9
 
-# Definir diretório de trabalho
 WORKDIR /app
 
-# Copiar e instalar dependências
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar o restante do código
 COPY . .
 
-# Expor a porta usada pelo Uvicorn
+ENV PYTHONPATH=/app/app
+
 EXPOSE 8000
 
-# Rodar a aplicação FastAPI
+ENV SECRET_KEY="sua_chave_super_secreta"
+ENV ALGORITHM="HS256"
+ENV SUPABASE_URL="https://hdgcquzcfbbwqufznatb.supabase.co"
+ENV SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZ2NxdXpjZmJid3F1ZnpuYXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MjY2NDMsImV4cCI6MjA3NDIwMjY0M30.7r9RNPhoGT4UJdolJFsDmaftbApKTg61DKgOcchkRWY"
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
