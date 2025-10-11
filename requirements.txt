@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+jinja2
+pydantic[email]>=2.0
+supabase
+python-dotenv
+passlib[bcrypt]
+python-multipart
+bcrypt>=3.1.0,<4.0.0
+
