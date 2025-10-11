@@ -4,7 +4,7 @@ from api.services.auth_service import login
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from app.api.services.registro_service import inserir_registro
+from app.api.services.register_service import inserir_registro
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")

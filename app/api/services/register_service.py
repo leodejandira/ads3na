@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from api.schema.registros import Registro, RegistroCreate
+from app.api.schema.registros import Registro, RegistroCreate
 from db.database import get_client
 from fastapi import HTTPException
 from passlib.hash import bcrypt
@@ -25,12 +25,16 @@ def listar_registros() -> List[Registro]:
     try:
         supabase = get_client()
         response = supabase.table(TABLE_NAME).select("*").execute()
+         # Solução 
+        # user_list = [Registro(**user_data) for user_data in response.data]
+        # return user_list
         registros = response.data if response.data else []
         return registros
 
+       
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Erro ao listrar registros: {str(e)}"
+            status_code=500, detail=f"Erro ao listar registros: {str(e)}"
         )
 
 
