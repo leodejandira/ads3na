@@ -25,13 +25,9 @@ def listar_registros() -> List[Registro]:
     try:
         supabase = get_client()
         response = supabase.table(TABLE_NAME).select("*").execute()
-         # Solução 
-        # user_list = [Registro(**user_data) for user_data in response.data]
-        # return user_list
         registros = response.data if response.data else []
-        return registros
+        return [Registro(**registro) for registro in registros]
 
-       
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Erro ao listar registros: {str(e)}"

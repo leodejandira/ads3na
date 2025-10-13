@@ -1,10 +1,11 @@
+from typing import List
 import jwt
-from api.schema.registros import RegistroCreate
+from api.schema.registros import Registro, RegistroCreate
 from api.services.auth_service import login
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from app.api.services.register_service import inserir_registro
+from app.api.services.register_service import atualizar_registro, buscar_registro, deletar_registro, inserir_registro, listar_registros
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -143,3 +144,90 @@ def rota_usuario(user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403,
                             detail="Apenas usuários podem acessar")
     return {"msg": f"Bem-vindo usuário {user['email']}"}
+
+
+@router.get("/usuarios", response_model=List[Registro], tags=["Autenticação"])
+def listar_usuarios_route():
+    try:
+        return listar_registros()
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/usuarios/{registro_id}", response_model=Registro, tags=["Autenticação"])
+def buscar_usuario_route(registro_id: int):
+    """
+    Retorna um usuário específico pelo ID.
+
+    Parâmetros:
+        registro_id (int): ID do usuário a ser buscado.
+
+    Raises:
+        HTTPException:
+            - 404: Se o usuário não for encontrado.
+            - 500: Erro inesperado.
+
+    Retorno:
+        Registro: Objeto do usuário encontrado.
+    """
+    try:
+        usuario = buscar_registro(registro_id)
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        return usuario
+    except HTTPException as e:
+        raise e
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro ao buscar usuário.")
+
+
+@router.put("/usuarios/{registro_id}", response_model=Registro, tags=["Autenticação"])
+def atualizar_usuario_route(registro_id: int, name: str, email: str):
+    """
+    Atualiza os dados de um usuário existente pelo ID.
+
+    Parâmetros:
+        registro_id (int): ID do usuário a ser atualizado.
+        name (str): Novo nome.
+        email (str): Novo e-mail.
+
+    Raises:
+        HTTPException:
+            - 404: Se o usuário não for encontrado.
+            - 500: Erro inesperado.
+
+    Retorno:
+        Registro: Objeto do usuário atualizado.
+    """
+    try:
+        return atualizar_registro(registro_id, name, email)
+    except HTTPException as e:
+        raise e
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro ao atualizar usuário.")
+
+
+@router.delete("/usuarios/{registro_id}", response_model=Registro, tags=["Autenticação"])
+def deletar_usuario_route(registro_id: int):
+    """
+    Deleta um usuário existente pelo ID.
+
+    Parâmetros:
+        registro_id (int): ID do usuário a ser removido.
+
+    Raises:
+        HTTPException:
+            - 404: Se o usuário não for encontrado.
+            - 500: Erro inesperado.
+
+    Retorno:
+        Registro: Objeto do usuário deletado.
+    """
+    try:
+        return deletar_registro(registro_id)
+    except HTTPException as e:
+        raise e
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erro ao deletar usuário.")
