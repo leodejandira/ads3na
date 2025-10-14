@@ -1,0 +1,17 @@
+Ignorar o cache do Python
+pycache/
+*.pyc
+
+Ignorar o ambiente virtual (se você tiver um)
+.venv/
+venv/
+env/
+
+Ignorar arquivos de configuração do Git e do editor
+.git/
+.gitignore
+.vscode/
+
+IGNORAR ARQUIVOS SENSÍVEIS E DE AMBIENTE LOCAL
+.env
+*.env.local
