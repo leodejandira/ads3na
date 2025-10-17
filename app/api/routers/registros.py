@@ -2,8 +2,9 @@
 from typing import List
 
 from api.schema.registros import Registro, RegistroCreate
-from app.services import registros as service
 from fastapi import APIRouter, HTTPException
+
+from app.services import registros as service
 
 router = APIRouter(prefix="/api/registros", tags=["Registros"])
 

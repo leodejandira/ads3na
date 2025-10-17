@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuário</title>
+</head>
+<body>
+    <div id="loadingMessage">Verificando autenticação...</div>
+
+    <div id="protectedContent" style="display:none; padding: 20px;">
+        <h1>Peão</h1>
+        <p>Trabalha escravo.</p>
+        <button onclick="logout()">Sair / Logout</button>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('access_token');
+        const loading = document.getElementById('loadingMessage');
+        const content = document.getElementById('protectedContent');
+        const apiRoute = '/rota-usuario'; 
+
+        if (!token) {
+            window.location.href = '/login';
+        } else {
+            fetch(apiRoute, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                loading.style.display = 'none';
+                if (response.ok) {
+                    content.style.display = 'block';
+                } else {
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/login';
+                }
+            })
+            .catch(error => {
+                console.error('Erro de rede:', error);
+                window.location.href = '/login';
+            });
+        }
+        
+        function logout() {
+            localStorage.removeItem('access_token');
+            window.location.href = '/'; 
+        }
+    </script>
+</body>
+</html>

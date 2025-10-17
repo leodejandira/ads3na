@@ -1,8 +1,11 @@
+// scripts.js (NENHUMA ALTERAÇÃO NECESSÁRIA, CÓDIGO PERFEITO PARA API)
+
 const tabelaBody = document.querySelector("#tabela tbody");
 const resultadoBusca = document.getElementById("resultadoBusca");
 
 async function listarRegistros() {
-    const res = await fetch("/api/registros");
+    // Caminho absoluto /api/registros está correto
+    const res = await fetch("/api/registros"); 
     const dados = await res.json();
 
     tabelaBody.innerHTML = "";
@@ -15,7 +18,8 @@ async function listarRegistros() {
 
 async function buscarRegistro() {
     const id = document.getElementById("buscarId").value;
-    const res = await fetch(`/api/registros/${id}`);
+    // Caminho absoluto /api/registros/id está correto
+    const res = await fetch(`/api/registros/${id}`); 
     if(res.ok) {
         const data = await res.json();
         resultadoBusca.textContent = `ID: ${data.id}, Valor: ${data.valor}`;
@@ -26,6 +30,7 @@ async function buscarRegistro() {
 
 async function inserirRegistro() {
     const valor = document.getElementById("novoValor").value;
+    // Caminho absoluto /api/registros está correto
     await fetch("/api/registros", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -37,6 +42,7 @@ async function inserirRegistro() {
 
 async function deletarRegistro() {
     const id = document.getElementById("deleteId").value;
+    // Caminho absoluto /api/registros/id está correto
     await fetch(`/api/registros/${id}`, { method: "DELETE" });
     document.getElementById("deleteId").value = "";
     listarRegistros();

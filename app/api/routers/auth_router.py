@@ -1,11 +1,14 @@
 from typing import List
+
 import jwt
 from api.schema.registros import Registro, RegistroCreate
-from app.services.auth_service import login
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from app.services.register_service import atualizar_registro, buscar_registro, deletar_registro, inserir_registro, listar_registros
+from app.services.auth_service import login
+from app.services.register_service import (atualizar_registro, buscar_registro,
+                                           deletar_registro, inserir_registro,
+                                           listar_registros)
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -21,82 +24,67 @@ def register_route(novo_usuario: RegistroCreate):
 
     Raises:
         HTTPException:
-            - 400: Se os dados fornecidos forem inválidos ou ja existirem.
+            - 400: Se os dados fornecidos forem inválidos ou já existirem.
             - 500: Se ocorrer um erro inesperado no processo de registro.
 
-    Retorno: Objeto Registro criado
+    Retorno: Objeto Registro criado.
     """
     try:
         return inserir_registro(novo_usuario)
-
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Erro interno ao registrar o usuário."
+            detail="Erro interno ao registrar o usuário.",
         )
 
 
 @router.post("/login")
 def login_route(form_data: OAuth2PasswordRequestForm = Depends()):
     """
-    função responsável por autenticar um usuário no sistema.
+    Autentica um usuário no sistema.
 
-    Valida as credenciais (e-mail e senha) e retorna um token JWT
-    em caso de sucesso. Caso as credenciais sejam inválidas ou o
-    usuário esteja inativo, uma exceção HTTP sera lançada.
-
-    Parametros:
-        form_data(OAuth2PasswordRequestForm): Objeto contendo os dados do login
-            - username: o e-mail do usuário.
-            - password: a senha em texto plano.
+    Valida as credenciais e retorna um token JWT em caso de sucesso.
 
     Raises:
         HTTPException:
-            - 401: Credenciais inválidas
-            - 403: Usuário inativo
-            - 500: Erro inesperado durante o login
+            - 401: Credenciais inválidas.
+            - 403: Usuário inativo.
+            - 500: Erro inesperado durante o login.
 
     Retorno:
-        dict: Um dicionário contendo o token de acesso e o tipo do token.
-            {
-                "acess_token": "<token_jwt>",
-                "token_type": "bearer"
-            }
+        dict: Contém o token de acesso e o tipo do token.
     """
     try:
         token = login(form_data.username, form_data.password)
         return {"access_token": token, "token_type": "bearer"}
-
     except HTTPException as http_err:
         raise http_err
-
     except Exception:
-        raise HTTPException(status_code=500,
-                            detail="Erro interno ao realizar login.")
+        raise HTTPException(
+            status_code=500,
+            detail="Erro interno ao realizar login.",
+        )
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     """
     Decodifica o token JWT e retorna os dados do usuário atual.
 
-    Parametros:
-        token (str): Token JWT extraído do cabeçalho Authorization.
-
     Raises:
         HTTPException:
-            -401: Se o token estiver expirado ou for invalido.
+            - 401: Se o token estiver expirado ou for inválido.
 
     Retorno:
-        dict: Payload decodificado do token JWT,
-        contendo informações do usuário.
+        dict: Payload decodificado do token JWT.
     """
     try:
         payload = jwt.decode(
-            token, "sua_chave_super_secreta",
-            algorithms=["HS256"])
+            token,
+            "sua_chave_super_secreta",
+            algorithms=["HS256"],
+        )
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expirado")
@@ -107,47 +95,34 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 @router.get("/rota-gerente")
 def rota_gerente(user: dict = Depends(get_current_user)):
     """
-    Endpoint acessível apenas por usuários com o papel "gerente"
-
-    Parametros:
-        user (dict): Dados do usuário extraidos do token JWT.
-
-    Raises:
-        HTTPException:
-            - 403: Se o usuário não for gerente.
-
-    Retorno:
-        dict: Mensagem de boas-vindas personalizada para o gerente.
+    Endpoint acessível apenas por usuários com o papel 'gerente'.
     """
     if user["role"] != "gerente":
-        raise HTTPException(status_code=403,
-                            detail="Apenas gerentes podem acessar")
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas gerentes podem acessar.",
+        )
     return {"msg": f"Bem-vindo gerente {user['email']}"}
 
 
 @router.get("/rota-usuario")
 def rota_usuario(user: dict = Depends(get_current_user)):
     """
-    Endpoint acessivel apenas por usuários com o papel "usuario".
-
-    Parametros:
-        user (dict): Dados do usuário extraidos do token JWT.
-
-    Raises:
-        HTTPException:
-            - 403: Se o usuário não for usuário comum.
-
-    Retorno:
-        dict: Mensagem de boas-vindas personalizada para o usuário.
+    Endpoint acessível apenas por usuários com o papel 'usuario'.
     """
     if user["role"] != "usuario":
-        raise HTTPException(status_code=403,
-                            detail="Apenas usuários podem acessar")
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas usuários podem acessar.",
+        )
     return {"msg": f"Bem-vindo usuário {user['email']}"}
 
 
 @router.get("/usuarios", response_model=List[Registro], tags=["Autenticação"])
 def listar_usuarios_route():
+    """
+    Lista todos os usuários registrados.
+    """
     try:
         return listar_registros()
     except HTTPException as e:
@@ -156,78 +131,67 @@ def listar_usuarios_route():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/usuarios/{registro_id}", response_model=Registro, tags=["Autenticação"])
+@router.get(
+    "/usuarios/{registro_id}",
+    response_model=Registro,
+    tags=["Autenticação"],
+)
 def buscar_usuario_route(registro_id: int):
     """
     Retorna um usuário específico pelo ID.
-
-    Parâmetros:
-        registro_id (int): ID do usuário a ser buscado.
-
-    Raises:
-        HTTPException:
-            - 404: Se o usuário não for encontrado.
-            - 500: Erro inesperado.
-
-    Retorno:
-        Registro: Objeto do usuário encontrado.
     """
     try:
         usuario = buscar_registro(registro_id)
         if not usuario:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+            raise HTTPException(
+                status_code=404,
+                detail="Usuário não encontrado.",
+            )
         return usuario
     except HTTPException as e:
         raise e
     except Exception:
-        raise HTTPException(status_code=500, detail="Erro ao buscar usuário.")
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao buscar usuário.",
+        )
 
 
-@router.put("/usuarios/{registro_id}", response_model=Registro, tags=["Autenticação"])
+@router.put(
+    "/usuarios/{registro_id}",
+    response_model=Registro,
+    tags=["Autenticação"],
+)
 def atualizar_usuario_route(registro_id: int, name: str, email: str):
     """
     Atualiza os dados de um usuário existente pelo ID.
-
-    Parâmetros:
-        registro_id (int): ID do usuário a ser atualizado.
-        name (str): Novo nome.
-        email (str): Novo e-mail.
-
-    Raises:
-        HTTPException:
-            - 404: Se o usuário não for encontrado.
-            - 500: Erro inesperado.
-
-    Retorno:
-        Registro: Objeto do usuário atualizado.
     """
     try:
         return atualizar_registro(registro_id, name, email)
     except HTTPException as e:
         raise e
     except Exception:
-        raise HTTPException(status_code=500, detail="Erro ao atualizar usuário.")
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao atualizar usuário.",
+        )
 
 
-@router.delete("/usuarios/{registro_id}", response_model=Registro, tags=["Autenticação"])
+@router.delete(
+    "/usuarios/{registro_id}",
+    response_model=Registro,
+    tags=["Autenticação"],
+)
 def deletar_usuario_route(registro_id: int):
     """
     Deleta um usuário existente pelo ID.
-
-    Parâmetros:
-        registro_id (int): ID do usuário a ser removido.
-
-    Raises:
-        HTTPException:
-            - 404: Se o usuário não for encontrado.
-            - 500: Erro inesperado.
-
-    Retorno:
-        Registro: Objeto do usuário deletado.
     """
     try:
         return deletar_registro(registro_id)
     except HTTPException as e:
         raise e
     except Exception:
-        raise HTTPException(status_code=500, detail="Erro ao deletar usuário.")
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao deletar usuário.",
+        )
