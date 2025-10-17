@@ -5,7 +5,7 @@ import jwt
 from fastapi import HTTPException
 from passlib.hash import bcrypt
 
-from app.api.services.register_service import buscar_por_email
+from app.services.register_service import buscar_por_email
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM")

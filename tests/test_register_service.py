@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 # Importe a função que você quer testar e o modelo Pydantic
 from app.api.schema.registros import Registro 
-from app.api.services.register_service import listar_registros
+from app.services.register_service import listar_registros
 
 # tests/test_register_service.py
 

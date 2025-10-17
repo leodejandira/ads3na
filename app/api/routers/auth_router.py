@@ -1,11 +1,11 @@
 from typing import List
 import jwt
 from api.schema.registros import Registro, RegistroCreate
-from api.services.auth_service import login
+from app.services.auth_service import login
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from app.api.services.register_service import atualizar_registro, buscar_registro, deletar_registro, inserir_registro, listar_registros
+from app.services.register_service import atualizar_registro, buscar_registro, deletar_registro, inserir_registro, listar_registros
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
