@@ -1,20 +1,24 @@
+import os
+import tempfile
 from typing import List
+from uuid import UUID
 
 import jwt
-from api.schema.registros import Registro, RegistroCreate
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
+from app.api.schema.registros import Registro, RegistroCreate
 from app.services.auth_service import login
 from app.services.register_service import (atualizar_registro, buscar_registro,
                                            deletar_registro, inserir_registro,
                                            listar_registros)
+from app.services.register_service import upload_pdf as upload_pdf_service
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-@router.post("/register")
+@router.post("/register", response_model=Registro)
 def register_route(novo_usuario: RegistroCreate):
     """
     Registra um novo usuário.
@@ -29,15 +33,7 @@ def register_route(novo_usuario: RegistroCreate):
 
     Retorno: Objeto Registro criado.
     """
-    try:
-        return inserir_registro(novo_usuario)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Erro interno ao registrar o usuário.",
-        )
+    return inserir_registro(novo_usuario)
 
 
 @router.post("/login")
@@ -195,3 +191,56 @@ def deletar_usuario_route(registro_id: int):
             status_code=500,
             detail="Erro ao deletar usuário.",
         )
+
+
+@router.post("/upload_pdf")
+async def upload_pdf_route(
+    file: UploadFile = File(...),
+    user: dict = Depends(get_current_user),  # vem do token JWT
+):
+    """
+    Rota para upload de PDF. Somente usuários 'gerente' podem enviar.
+    """
+    try:
+        # Validação do role
+        if user.get("role") != "gerente":
+            raise HTTPException(
+                status_code=403,
+                detail="Acesso negado. Somente gerentes podem enviar PDFs.",
+            )
+
+        # Validar UUID do usuário
+        try:
+            user_uuid = UUID(str(user["sub"]))
+        except ValueError:
+            raise HTTPException(
+                status_code=400, detail="ID do usuário no token não é UUID válido."
+            )
+
+        print(f"Current user (UUID): {user_uuid}")
+        print(f"Arquivo recebido: {file.filename}")
+
+        # Salva arquivo temporário
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+            contents = await file.read()
+            temp_file.write(contents)
+            temp_file_path = temp_file.name
+
+        print(f"Arquivo temporário criado em: {temp_file_path}")
+
+        result = upload_pdf_service(
+            file_path=temp_file_path,
+            user_id=str(user_uuid),
+            display_name=file.filename if file.filename else "" "arquivo_sem_nome.pdf",
+        )
+
+        # Remove arquivo temporário
+        os.remove(temp_file_path)
+
+        return result
+
+    except HTTPException as http_e:
+        raise http_e
+    except Exception as e:
+        print(f"Erro inesperado no upload_pdf_route: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

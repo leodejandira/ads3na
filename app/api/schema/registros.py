@@ -1,4 +1,5 @@
 from enum import Enum
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
@@ -17,6 +18,7 @@ class RegistroCreate(BaseModel):
 
 class Registro(BaseModel):
     id: int
+    auth_user_id: UUID
     name: str
     email: EmailStr
     role: UserRole

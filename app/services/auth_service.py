@@ -29,8 +29,25 @@ def gerar_token(user):
     Returns:
         str: Token JWT codificado como uma string.
     """
+
+    auth_uuid = user.get("auth_user_id")
+
+    if not auth_uuid:
+        print(
+            (
+                f"ERRO DE TOKEN: Usuário {user.get('email')} "
+                "não possui 'auth_user_id' associado."
+            )
+        )
+
+        raise HTTPException(
+            status_code=500,
+            detail="Erro interno de autenticação:"
+            "ID de usuário (UUID) não encontrado.",
+        )
+
     payload = {
-        "sub": str(user["id"]),
+        "sub": str(auth_uuid),
         "email": user["email"],
         "role": user["role"],
         "exp": datetime.now(tz=timezone.utc)
@@ -41,9 +58,18 @@ def gerar_token(user):
 
 
 def login(email: str, senha: str):
+    """
+    Função de login que valida o usuário e retorna o token.
+    """
     user = buscar_por_email(email)
-    if not user or not bcrypt.verify(senha, user["senha_hash"]):
+
+    if not user:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
-    if not user["ativo"]:
+
+    if not bcrypt.verify(senha, user["senha_hash"]):
+        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+
+    if not user.get("ativo", True):
         raise HTTPException(status_code=403, detail="Usuário inativo")
+
     return gerar_token(user)
