@@ -6,6 +6,8 @@ from uuid import UUID
 import jwt
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Request
+from fastapi.templating import Jinja2Templates
 
 from app.api.schema.registros import Registro, RegistroCreate
 from app.services.auth_service import login
@@ -16,6 +18,7 @@ from app.services.register_service import upload_pdf as upload_pdf_service
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+templates = Jinja2Templates(directory="app/templates")
 
 
 @router.post("/register", response_model=Registro)
@@ -192,6 +195,17 @@ def deletar_usuario_route(registro_id: int):
             detail="Erro ao deletar usuário.",
         )
 
+@router.get("/upload")
+def upload_page(request: Request, user: dict = Depends(get_current_user)):
+    """
+    Serve a página de upload para gerentes.
+    """
+    if user["role"] != "gerente":
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas gerentes podem acessar esta página.",
+        )
+    return templates.TemplateResponse("upload.html", {"request": request})
 
 @router.post("/upload_pdf")
 async def upload_pdf_route(
@@ -244,3 +258,5 @@ async def upload_pdf_route(
     except Exception as e:
         print(f"Erro inesperado no upload_pdf_route: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+

@@ -4,25 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerente</title>
+    <style>
+        body { margin: 20px; font-family: Arial; }
+        .loading { text-align: center; padding: 20px; }
+        .content { text-align: center; }
+        button { 
+            display: block; 
+            margin: 10px auto; 
+            padding: 10px 20px; 
+            width: 200px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <div id="loadingMessage">Verificando autenticação...</div>
+    <div id="loading" class="loading">Verificando autenticação...</div>
 
-    <div id="protectedContent" style="display:none; padding: 20px;">
+    <div id="content" class="content" style="display:none;">
         <h1>GERENTE</h1>
         <p>sou patrão não funcionário meu estilo de vida é foda...</p>
+        
+        <button onclick="window.location.href='/upload'">Upload de PDF</button>
+        <button onclick="window.location.href='#'">Gerenciar Funcionários</button>
+        <button onclick="window.location.href='#'">Chat</button>
+        <button onclick="logout()">Sair</button>
     </div>
 
     <script>
         const token = localStorage.getItem('access_token');
-        const loading = document.getElementById('loadingMessage');
-        const content = document.getElementById('protectedContent');
-        const apiRoute = '/rota-gerente'; 
+        const loading = document.getElementById('loading');
+        const content = document.getElementById('content');
 
         if (!token) {
             window.location.href = '/login';
         } else {
-            fetch(apiRoute, {
+            fetch('/rota-gerente', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -38,14 +54,14 @@
                 }
             })
             .catch(error => {
-                console.error('Erro de rede:', error);
+                console.error('Erro:', error);
                 window.location.href = '/login';
             });
         }
         
         function logout() {
             localStorage.removeItem('access_token');
-            window.location.href = '/'; 
+            window.location.href = '/';
         }
     </script>
 </body>

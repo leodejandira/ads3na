@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.api.routers import auth_router
+from app.api.routers.auth_router import get_current_user
 
 app = FastAPI()
 
@@ -59,5 +60,17 @@ async def serve_usuario_page(request: Request):
         context={},
     )
 
+
+@app.get("/upload", response_class=HTMLResponse)
+async def serve_upload_page(request: Request):
+    """
+    Serve a página de upload de PDF para gerentes.
+    A proteção é feita no frontend (assim como /gerente).
+    """
+    return templates.TemplateResponse(
+        request=request,
+        name="upload.html",
+        context={},
+    )
 
 app.include_router(auth_router.router, tags=["Autenticação"])

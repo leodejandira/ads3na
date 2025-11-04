@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de PDF</title>
+    <style>
+        body { margin: 20px; font-family: Arial; }
+        .loading { text-align: center; padding: 20px; }
+        .content { text-align: center; }
+        button { 
+            display: block; 
+            margin: 10px auto; 
+            padding: 10px 20px; 
+            width: 200px;
+            cursor: pointer;
+        }
+        input[type="file"], input[type="text"] {
+            display: block;
+            margin: 10px auto;
+            padding: 8px;
+            width: 300px;
+        }
+        #message {
+            margin: 20px auto;
+            padding: 10px;
+            max-width: 500px;
+            text-align: left;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div id="authCheck" class="loading">Verificando autenticação...</div>
+
+    <div id="mainContent" class="content" style="display:none;">
+        <h1>UPLOAD DE PDF</h1>
+        
+        <form id="uploadForm">
+            <input type="file" id="pdfFile" name="file" accept=".pdf" required>
+            <input type="text" id="displayName" name="display_name" placeholder="Nome de exibição (opcional)">
+            <button type="submit" id="submitBtn">Enviar PDF</button>
+        </form>
+
+        <div id="message"></div>
+
+        <button onclick="window.location.href='/gerente'">Voltar</button>
+    </div>
+
+    <script>
+        // Verificação de autenticação
+        const token = localStorage.getItem('access_token');
+        const authCheck = document.getElementById('authCheck');
+        const mainContent = document.getElementById('mainContent');
+
+        if (!token) {
+            window.location.href = '/login';
+        } else {
+            // Verifica se é gerente
+            fetch('/rota-gerente', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    authCheck.style.display = 'none';
+                    mainContent.style.display = 'block';
+                } else {
+                    localStorage.removeItem('access_token');
+                    window.location.href = '/login';
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                window.location.href = '/login';
+            });
+        }
+
+        // Código do formulário de upload
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+            const fileInput = document.getElementById('pdfFile');
+            const displayNameInput = document.getElementById('displayName');
+            
+            // Reset message
+            messageDiv.innerHTML = '';
+            messageDiv.className = '';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
+            
+            const token = localStorage.getItem('access_token');
+            
+            if (!token) {
+                showMessage('Erro: Token de autenticação não encontrado. Faça login novamente.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar PDF';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            if (displayNameInput.value) {
+                formData.append('display_name', displayNameInput.value);
+            }
+            
+            try {
+                const response = await fetch('/upload_pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage(`
+                        <strong>Upload realizado com sucesso!</strong><br>
+                        <strong>Nome do arquivo:</strong> ${result.file_name}<br>
+                        <strong>Nome de exibição:</strong> ${result.display_name}<br>
+                        <strong>URL assinada:</strong> <a href="${result.signed_url}" target="_blank">${result.signed_url}</a>
+                    `, 'success');
+                    
+                    // Reset form
+                    fileInput.value = '';
+                    displayNameInput.value = '';
+                } else {
+                    showMessage(`Erro: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                console.error('Erro no upload:', error);
+                showMessage('Erro de rede ao tentar fazer upload.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar PDF';
+            }
+        });
+        
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = message;
+            messageDiv.className = type;
+        }
+    </script>
+</body>
+</html>
