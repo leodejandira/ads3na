@@ -18,13 +18,37 @@ from app.services.register_service import upload_pdf as upload_pdf_service
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="templates")
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    """
+    Decodifica o token JWT e retorna os dados do usuário atual.
+
+    Raises:
+        HTTPException:
+            - 401: Se o token estiver expirado ou for inválido.
+
+    Retorno:
+        dict: Payload decodificado do token JWT.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            "sua_chave_super_secreta",
+            algorithms=["HS256"],
+        )
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
 
 
 @router.post("/register", response_model=Registro)
-def register_route(novo_usuario: RegistroCreate):
+def register_route(novo_usuario: RegistroCreate, user: dict = Depends(get_current_user)):
     """
-    Registra um novo usuário.
+    Registra um novo usuário. Apenas gerentes podem registrar novos usuários.
 
     Parâmetro de entrada: objeto RegistroCreate contendo
     name, email, senha e role.
@@ -32,10 +56,16 @@ def register_route(novo_usuario: RegistroCreate):
     Raises:
         HTTPException:
             - 400: Se os dados fornecidos forem inválidos ou já existirem.
+            - 403: Apenas gerentes podem registrar usuários.
             - 500: Se ocorrer um erro inesperado no processo de registro.
 
     Retorno: Objeto Registro criado.
     """
+    if user["role"] != "gerente":
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas gerentes podem registrar novos usuários.",
+        )
     return inserir_registro(novo_usuario)
 
 
@@ -67,30 +97,6 @@ def login_route(form_data: OAuth2PasswordRequestForm = Depends()):
         )
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """
-    Decodifica o token JWT e retorna os dados do usuário atual.
-
-    Raises:
-        HTTPException:
-            - 401: Se o token estiver expirado ou for inválido.
-
-    Retorno:
-        dict: Payload decodificado do token JWT.
-    """
-    try:
-        payload = jwt.decode(
-            token,
-            "sua_chave_super_secreta",
-            algorithms=["HS256"],
-        )
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expirado")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token inválido")
-
-
 @router.get("/rota-gerente")
 def rota_gerente(user: dict = Depends(get_current_user)):
     """
@@ -118,10 +124,15 @@ def rota_usuario(user: dict = Depends(get_current_user)):
 
 
 @router.get("/usuarios", response_model=List[Registro], tags=["Autenticação"])
-def listar_usuarios_route():
+def listar_usuarios_route(user: dict = Depends(get_current_user)):
     """
-    Lista todos os usuários registrados.
+    Lista todos os usuários registrados. Apenas gerentes podem listar usuários.
     """
+    if user["role"] != "gerente":
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas gerentes podem listar usuários.",
+        )
     try:
         return listar_registros()
     except HTTPException as e:
@@ -135,10 +146,15 @@ def listar_usuarios_route():
     response_model=Registro,
     tags=["Autenticação"],
 )
-def buscar_usuario_route(registro_id: int):
+def buscar_usuario_route(registro_id: int, user: dict = Depends(get_current_user)):
     """
-    Retorna um usuário específico pelo ID.
+    Retorna um usuário específico pelo ID. Apenas gerentes podem buscar usuários.
     """
+    if user["role"] != "gerente":
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas gerentes podem buscar usuários.",
+        )
     try:
         usuario = buscar_registro(registro_id)
         if not usuario:
@@ -161,10 +177,15 @@ def buscar_usuario_route(registro_id: int):
     response_model=Registro,
     tags=["Autenticação"],
 )
-def atualizar_usuario_route(registro_id: int, name: str, email: str):
+def atualizar_usuario_route(registro_id: int, name: str, email: str, user: dict = Depends(get_current_user)):
     """
-    Atualiza os dados de um usuário existente pelo ID.
+    Atualiza os dados de um usuário existente pelo ID. Apenas gerentes podem atualizar usuários.
     """
+    if user["role"] != "gerente":
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas gerentes podem atualizar usuários.",
+        )
     try:
         return atualizar_registro(registro_id, name, email)
     except HTTPException as e:
@@ -181,10 +202,15 @@ def atualizar_usuario_route(registro_id: int, name: str, email: str):
     response_model=Registro,
     tags=["Autenticação"],
 )
-def deletar_usuario_route(registro_id: int):
+def deletar_usuario_route(registro_id: int, user: dict = Depends(get_current_user)):
     """
-    Deleta um usuário existente pelo ID.
+    Deleta um usuário existente pelo ID. Apenas gerentes podem deletar usuários.
     """
+    if user["role"] != "gerente":
+        raise HTTPException(
+            status_code=403,
+            detail="Apenas gerentes podem deletar usuários.",
+        )
     try:
         return deletar_registro(registro_id)
     except HTTPException as e:
@@ -194,6 +220,7 @@ def deletar_usuario_route(registro_id: int):
             status_code=500,
             detail="Erro ao deletar usuário.",
         )
+
 
 @router.get("/upload")
 def upload_page(request: Request, user: dict = Depends(get_current_user)):
@@ -206,6 +233,7 @@ def upload_page(request: Request, user: dict = Depends(get_current_user)):
             detail="Apenas gerentes podem acessar esta página.",
         )
     return templates.TemplateResponse("upload.html", {"request": request})
+
 
 @router.post("/upload_pdf")
 async def upload_pdf_route(
@@ -245,7 +273,7 @@ async def upload_pdf_route(
         result = upload_pdf_service(
             file_path=temp_file_path,
             user_id=str(user_uuid),
-            display_name=file.filename if file.filename else "" "arquivo_sem_nome.pdf",
+            display_name=file.filename if file.filename else "arquivo_sem_nome.pdf",
         )
 
         # Remove arquivo temporário
@@ -258,5 +286,3 @@ async def upload_pdf_route(
     except Exception as e:
         print(f"Erro inesperado no upload_pdf_route: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    
-

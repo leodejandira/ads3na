@@ -73,4 +73,15 @@ async def serve_upload_page(request: Request):
         context={},
     )
 
+@app.get("/funcionarios", response_class=HTMLResponse)
+async def serve_funcionarios_page(request: Request):
+    """
+    Serve a página de gerenciamento de funcionários para gerentes.
+    """
+    return templates.TemplateResponse(
+        request=request,
+        name="funcionarios.html",
+        context={},
+    )
+
 app.include_router(auth_router.router, tags=["Autenticação"])
