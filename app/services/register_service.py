@@ -282,3 +282,91 @@ def upload_pdf(
         "display_name": display_name,
         "signed_url": signed_url,
     }
+
+def list_pdfs(user_id: str = None, bucket_name: str = "pdfs"):
+    """
+    Lista os PDFs enviados, filtrando opcionalmente por usuário.
+
+    parâmetros:
+        user_id: (opcional) ID do usuário para filtrar os uploads.
+        bucket_name: nome do bucket onde os arquivos estão.
+
+    retorno:
+        Lista de dicionários contendo nome, caminho e status dos PDFs.
+    """
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    try:
+        query = supabase_admin.table("pdf_uploads").select("*")
+
+        if user_id:
+            query = query.eq("user_id", user_id)
+
+        res = query.execute()
+        print(f"[DEBUG] Resposta da listagem: {res}")
+
+        if hasattr(res, "error") and res.error:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erro ao listar PDFs: {res.error}",
+            )
+
+        return res.data
+
+    except Exception as e:
+        print(f"[ERROR] Erro ao listar PDFs: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao listar PDFs: {str(e)}")
+    
+def delete_pdf(display_name: str, bucket_name: str = "pdfs"):
+    """
+    Deleta um PDF do Supabase Storage e remove o registro no banco,
+    usando o nome de exibição (display_name).
+
+    parâmetros:
+        display_name: nome visível do arquivo (coluna 'file_name' no banco).
+        bucket_name: nome do bucket (padrão: 'pdfs').
+
+    retorno:
+        Mensagem de sucesso.
+    """
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    try:
+        # Busca o file_path no banco a partir do display_name
+        record = (
+            supabase_admin.table("pdf_uploads")
+            .select("id, file_path")
+            .eq("file_name", display_name)
+            .single()
+            .execute()
+        )
+
+        if not record.data:
+            raise HTTPException(status_code=404, detail="PDF não encontrado.")
+
+        file_path = record.data["file_path"]
+
+        # Remove o arquivo do Supabase Storage
+        delete_res = supabase_admin.storage.from_(bucket_name).remove([file_path])
+        print(f"[DEBUG] Resposta da exclusão no Storage: {delete_res}")
+
+        # Remove o registro no banco
+        db_res = (
+            supabase_admin.table("pdf_uploads")
+            .delete()
+            .eq("id", record.data["id"])
+            .execute()
+        )
+
+        print(f"[DEBUG] Resposta da exclusão no banco: {db_res}")
+
+        return {"message": f"PDF '{display_name}' removido com sucesso."}
+
+    except Exception as e:
+        print(f"[ERROR] Erro ao deletar PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")
+
