@@ -10,12 +10,13 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from supabase import create_client
 
+from app.db.database import get_client
 from app.api.schema.registros import Registro, RegistroCreate
 from app.services.auth_service import login
 from app.services.register_service import (atualizar_registro, buscar_registro,
                                            deletar_registro, inserir_registro,
                                            listar_registros)
-from app.services.register_service import upload_pdf as upload_pdf_service
+from app.services.pdfs import upload_pdf as upload_pdf_service
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -239,7 +240,7 @@ def upload_page(request: Request, user: dict = Depends(get_current_user)):
 @router.post("/upload_pdf")
 async def upload_pdf_route(
     file: UploadFile = File(...),
-    user: dict = Depends(get_current_user),  # vem do token JWT
+    user: dict = Depends(get_current_user),
 ):
     """
     Rota para upload de PDF. Somente usuários 'gerente' podem enviar.
@@ -260,6 +261,23 @@ async def upload_pdf_route(
                 status_code=400, detail="ID do usuário no token não é UUID válido."
             )
 
+        file_display_name = file.filename if file.filename else "arquivo_sem_nome.pdf"
+
+        supabase = get_client()
+
+        # *** VALIDAÇÃO AQUI ***
+        exists = (
+            supabase.table("pdf_uploads")
+            .select("id")
+            .eq("file_name", file_display_name)
+            .execute()
+        )
+
+        if exists.data:
+            raise HTTPException(
+                status_code=409, detail="Já existe um PDF com esse nome."
+            )
+
         print(f"Current user (UUID): {user_uuid}")
         print(f"Arquivo recebido: {file.filename}")
 
@@ -271,13 +289,13 @@ async def upload_pdf_route(
 
         print(f"Arquivo temporário criado em: {temp_file_path}")
 
+        # chama seu service
         result = upload_pdf_service(
             file_path=temp_file_path,
             user_id=str(user_uuid),
-            display_name=file.filename if file.filename else "arquivo_sem_nome.pdf",
+            display_name=file_display_name,
         )
 
-        # Remove arquivo temporário
         os.remove(temp_file_path)
 
         return result
@@ -287,6 +305,7 @@ async def upload_pdf_route(
     except Exception as e:
         print(f"Erro inesperado no upload_pdf_route: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/pdfs")
 async def list_pdfs_route(user: dict = Depends(get_current_user)):
