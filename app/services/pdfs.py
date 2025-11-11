@@ -3,6 +3,14 @@ import uuid
 from fastapi import HTTPException
 from supabase import create_client
 from app.db.database import get_client
+import tempfile
+import requests # 2.31.0
+import fitz # PyMuPDF 1.22.5
+from datetime import datetime
+from typing import Dict, Tuple, Optional
+import math
+from sentence_transformers import SentenceTransformer
+
 
 def upload_pdf(
     file_path: str,
@@ -201,4 +209,221 @@ def delete_pdf(display_name: str, bucket_name: str = "pdfs"):
     except Exception as e:
         print(f"[ERROR] Erro ao deletar PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")
+    
 
+def download_pdf_and_extract_text(
+        file_path: str,
+        bucket_name: str = "pdfs",
+        expire_seconds: int = 3600,
+        save_temp: bool = False,
+) -> Tuple[str, Dict]:
+    """
+    Baixa um PDF do Supabase Storage usando uma URL assinada e extrai o texto usando PyMuPDF.
+    parâmetros:
+        file_path: caminho do arquivo no bucket.
+        bucket_name: nome do bucket (padrão: 'pdfs').
+        expire_seconds: tempo de expiração da URL assinada (padrão: 3600 segundos).
+        save_temp: se True, salva o PDF em um arquivo temporário.
+
+    Retorna:
+        Texto extraido, metadata
+    """
+
+    print(f"[DEBUG] Iniciando download e extração do PDF: {file_path}")
+
+    supabase = get_client()
+
+    try:
+        signed_resp = supabase.storage.from_(bucket_name).create_signed_url(
+            file_path, expire_seconds
+        )
+        signed_url = (
+            signed_resp.get("signedURL")
+            or signed_resp.get("signed_url")
+            or signed_resp.get("url")
+        )
+
+        if not signed_url:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Não foi possivel gerar a URL assinada para {file_path}",
+            )
+        
+        print(f"[DEBUG] URL assinada gerada com sucesso.")
+    except Exception as e:
+        print(f"[ERROR] Falha ao gerar signed URL: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao gerar URL assinada: {str(e)}",
+        )
+    
+    temp_file = tempfile.NamedTemporaryFile(delete=not save_temp, suffix=".pdf")
+    temp_path = temp_file.name
+    total_bytes = 0
+
+    try:
+        print(f"[DEBUG] Baixando o PDF da URL assinada...")
+        with requests.get(signed_url, stream=True, timeout=60) as r:
+            r.raise_for_status()
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    temp_file.write(chunk)
+                    total_bytes += len(chunk)
+        temp_file.flush()
+        print(f"[DEBUG] Download concluido ({total_bytes} bytes).")
+    except Exception as e:
+        print(f"[ERROR] Falha ao baixar PDF: {e}")
+        
+        try:
+            if not save_temp and os.path.exists(temp_path):
+                os.remove(temp_path)
+        except OSError:
+            pass
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao baixar o PDF: {str(e)}"
+        )
+    
+    try:
+        print(f"[DEBUG] Iniciando extração do texto com PyMuPDF...")
+        with fitz.open(temp_path) as doc:
+            pages = doc.page_count
+            text_parts = []
+            for page in doc:
+                page_text = page.get_text("text").replace("\r","").strip()
+                if page_text:
+                    text_parts.append(page_text)
+            full_text = "\n\n".join(text_parts)
+        print(f"[DEBUG] Extração concluida com sucesso ({pages} páginas).")
+    except Exception as e:
+        print(f"[ERROR] Falha ao extrair texto do PDF: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao extrair texto do PDF: {str(e)}"
+        )
+    
+    finally:
+        if not save_temp:
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+    
+    metadata = {
+        "pages": pages,
+        "bytes": total_bytes,
+        "downloaded_at": datetime.utcnow().isoformat() + "Z",
+        "file_path": file_path,
+    }
+    if save_temp:
+        metadata["local_path"] = temp_path
+
+    return full_text, metadata
+                
+
+def chunk_text(text: str, max_tokens: int = 300) -> list:
+    """
+    Divide o texto em pedaços menores (chunks) para geração de embeddings..
+    """
+    words = text.split()
+    chunks = []
+    for i in range(0, len(words), max_tokens):
+        chunk = " ".join(words[i:i + max_tokens])
+        chunks.append(chunk)
+
+    return chunks
+
+
+def generate_embedding_for_pdf(file_name: str):
+    """
+    Gera embeddings a partir de um PDF ja processado.
+    - Busca o Registro no Supabase
+    - Extrai o texto (ou usa o salvo)
+    - Cria chunks
+    - Gera embeddings com SentenceTransformer
+    - Salva na tabela pdf_vectors
+    - Atualiza o status do PDF para "vetorizado"
+    """
+
+    print(f"[DEBUG] Iniciando geração de embeddings para: {file_name}")
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    EMBEDDING_MODEL = "intfloat/multilingual-e5-small"
+
+    try:
+        record = (
+            supabase_admin.table("pdf_uploads")
+            .select("*")
+            .eq("file_name", file_name)
+            .execute()
+        )
+
+        if not record.data:
+            raise HTTPException(status_code=404,
+                                detail="PDF não encontrado.")
+        
+        pdf_data = record.data[0]
+        print(f"[DEBUG] Registro encontrado: id={pdf_data['id']} status={pdf_data['status']}")
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar Registro: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Erro ao buscar registro: {str(e)}")
+    
+    if pdf_data.get("status") != "processado":
+        raise HTTPException(status_code=400,
+                            detail="O PDF ainda não foi processado para gerar embeddings.")
+    
+    print(f"[DEBUG] Extraindo texto do PDF {file_name}...")
+    text_content, _ = download_pdf_and_extract_text(pdf_data["file_path"])
+
+    chunks = chunk_text(text_content)
+    print(f"[DEBUG] Texto dividido em {len(chunks)} chunks.")
+
+
+    try:
+
+        print(f"[DEBUG] Carregando modelo de embeddings: {EMBEDDING_MODEL}...")
+        model = SentenceTransformer(EMBEDDING_MODEL)
+        embeddings = model.encode(chunks, show_progress_bar=True)
+        print(f"[DEBUG] Embeddings gerados com sucesso({len(embeddings)} vetores).")
+
+    except Exception as e:
+        print(f"[ERROR] Erro ao gerar embeddings: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Erro ao gerar embeddings:{e}")
+    
+    try:
+        rows = []
+        for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
+            rows.append({
+                "pdf_id": pdf_data["id"],
+                "chunk_index": i,
+                "chunk_text": chunk,
+                "embedding": emb.tolist(),
+                "embedding_model_used": EMBEDDING_MODEL,
+                "created_at": datetime.utcnow().isoformat()
+            })
+
+        insert_res = supabase_admin.table("pdf_vectors").insert(rows).execute()
+        print(f"[DEBUG] {len(rows)} vetores inseridos no banco com sucesso.")
+
+    except Exception as e:
+        print(f"[ERROR] Erro ao salvar embeddings no banco: {e}")
+        raise HTTPException(status_code=500,
+                            detail=f"Erro ao salvar embeddings: {e}")
+    
+    try:
+        supabase_admin.table("pdf_uploads") \
+            .update({"status": "vetorizado"}) \
+            .eq("id", pdf_data["id"]) \
+            .execute()
+        print(f"[DEBUG] Status do PDF atualizado para 'vetorizado'.")
+    except Exception as e:
+        print(f"[WARN] Falha ao atualizar status: {e}")
+
+    return {
+        "message": f"Embeddings gerados com sucesso para '{file_name}'.",
+        "chunks": len(chunks),
+        "model": EMBEDDING_MODEL
+    }

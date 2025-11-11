@@ -7,4 +7,12 @@ python-dotenv
 passlib[bcrypt]
 python-multipart
 bcrypt>=3.1.0,<4.0.0
-
+pymupdf==1.22.5
+requests==2.31.0
+sentence-transformers==2.2.2
+torch==2.0.1
+torchvision==0.15.2
+torchaudio==2.0.2
+huggingface-hub==0.14.1
+numpy==1.23.5
+openai==1.51.0

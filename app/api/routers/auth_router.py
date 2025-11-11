@@ -2,9 +2,9 @@ import os
 import tempfile
 from typing import List
 from uuid import UUID
-
+import json
 import jwt
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
@@ -17,6 +17,14 @@ from app.services.register_service import (atualizar_registro, buscar_registro,
                                            deletar_registro, inserir_registro,
                                            listar_registros)
 from app.services.pdfs import upload_pdf as upload_pdf_service
+from datetime import datetime
+from app.services.pdfs import download_pdf_and_extract_text
+from app.services.pdfs import generate_embedding_for_pdf
+import numpy as np
+from openai import OpenAI
+from sentence_transformers import SentenceTransformer
+
+
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -382,3 +390,241 @@ async def delete_pdf_route(display_name: str, user: dict = Depends(get_current_u
     except Exception as e:
         print(f"[ERROR] Erro ao deletar PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")
+
+@router.post("/pdfs/process/{file_name}")
+async def process_pdf_route(
+    file_name: str,
+    user: dict = Depends(get_current_user),
+):
+    """
+    Processa um PDF já enviado ao Supabase:
+    - Busca o registro pelo nome de exibição (file_name)
+    - Obtém o file_path (UUID) correspondente
+    - Baixa o PDF do Supabase Storage
+    - Extrai o texto com PyMuPDF
+    - Atualiza o status para 'processado'
+    - Retorna metadados e preview do texto extraído
+
+    Somente gerentes podem processar PDFs.
+    """
+
+    if user.get("role") != "gerente":
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado. Somente gerentes podem processar PDFs.",
+        )
+
+    print(f"[DEBUG] Iniciando processamento do PDF: {file_name} pelo usuário {user['email']}")
+
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    # 1️⃣ Buscar o registro pelo file_name
+    try:
+        record = (
+            supabase_admin.table("pdf_uploads")
+            .select("*")
+            .eq("file_name", file_name)
+            .limit(1)
+            .execute()
+        )
+
+        data = record.data
+        if not data:
+            print(f"[ERROR] PDF não encontrado no banco: {file_name}")
+            raise HTTPException(status_code=404, detail="PDF não encontrado.")
+
+        # Trata caso de lista aninhada
+        if isinstance(data[0], list):
+            pdf_data = data[0][0]
+        else:
+            pdf_data = data[0]
+
+        file_path = pdf_data.get("file_path")
+
+        print(f"[DEBUG] Registro encontrado: id={pdf_data.get('id')} file_path={file_path}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Erro ao consultar pdf_uploads: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao consultar registro: {str(e)}")
+
+    # 2️⃣ Extrair o texto do PDF
+    try:
+        full_text, meta = download_pdf_and_extract_text(
+            file_path=file_path,
+            bucket_name="pdfs",
+            expire_seconds=3600,
+            save_temp=False,
+        )
+        print(f"[DEBUG] Extração concluída: pages={meta.get('pages')} bytes={meta.get('bytes')}")
+    except Exception as e:
+        print(f"[ERROR] Erro na extração do PDF: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao extrair texto do PDF: {str(e)}")
+
+    # 3️⃣ Atualizar o registro no banco (somente status)
+    try:
+        update_payload = {
+            "status": "processado"
+        }
+
+        update_res = (
+            supabase_admin.table("pdf_uploads")
+            .update(update_payload)
+            .eq("file_path", file_path)
+            .execute()
+        )
+
+        print(f"[DEBUG] Registro atualizado com sucesso (id={pdf_data.get('id')}, status=processado).")
+
+    except Exception as e:
+        print(f"[ERROR] Erro ao atualizar registro: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar registro: {str(e)}")
+
+    return {
+        "message": f"PDF '{file_name}' processado com sucesso.",
+        "metadata": meta,
+        "text_preview": full_text[:800] + "..." if len(full_text) > 800 else full_text,
+    }
+
+
+@router.post("/pdfs/embed/{file_name}")
+async def embed_pdf_rout(file_name: str, user: dict = Depends(get_current_user)):
+    """
+    Gera embeddings para um PDF processado e salva na tabela pdf_vectores.
+    """
+
+    if user.get("role") != "gerente":
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso negado. Somente gerentes podem gerar embeddings."
+        )
+    
+    print(f"[DEBUG] Iniciando rota de embeddings para {file_name}")
+    result = generate_embedding_for_pdf(file_name)
+    return result
+
+
+# 🔹 Cache global do modelo de embeddings (carregado 1x)
+EMBEDDING_MODEL_NAME = "intfloat/multilingual-e5-small"
+model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+print(f"[INIT] Modelo de embeddings '{EMBEDDING_MODEL_NAME}' carregado com sucesso ✅")
+
+
+@router.post("/pdfs/query")
+async def query_pdf_route(
+    body: dict = Body(...),
+    user: dict = Depends(get_current_user)
+):
+    """
+    Rota para realizar consultas RAG com base nos PDFs vetorizados.
+    - Recebe o JSON: { "query": "texto da pergunta" }
+    - Gera embedding da pergunta
+    - Busca embeddings mais similares no Supabase
+    - Monta prompt com contexto
+    - Chama o modelo GPT configurado
+    """
+
+    # 🔒 Validação de permissão
+    if user.get("role") != "gerente":
+        raise HTTPException(status_code=403, detail="Somente gerentes podem consultar PDFs.")
+
+    # 🔹 Captura e valida o campo da query
+    query = body.get("query")
+    if not query:
+        raise HTTPException(status_code=400, detail="Campo 'query' é obrigatório no corpo JSON.")
+
+    print(f"[DEBUG] Iniciando consulta RAG para: {query}")
+
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+    # 🔹 Gera embedding da pergunta
+    try:
+        query_embedding = model.encode([query])[0].tolist()
+        print("[DEBUG] Embedding da pergunta gerado com sucesso.")
+    except Exception as e:
+        print(f"[ERROR] Erro ao gerar embedding da consulta: {e}")
+        raise HTTPException(status_code=500, detail="Erro ao gerar embedding da pergunta.")
+
+    # 🔹 Busca todos os vetores no banco
+    try:
+        vectors_res = supabase_admin.table("pdf_vectors").select("pdf_id, chunk_text, embedding").execute()
+        all_vectors = vectors_res.data
+        if not all_vectors:
+            raise HTTPException(status_code=404, detail="Nenhum vetor encontrado.")
+        print(f"[DEBUG] {len(all_vectors)} vetores carregados do banco.")
+    except Exception as e:
+        print(f"[ERROR] Erro ao buscar vetores: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar vetores: {str(e)}")
+
+    # 🔹 Calcula similaridade entre a pergunta e os embeddings
+    try:
+        similarities = []
+        for v in all_vectors:
+            emb_data = v["embedding"]
+
+            # Se o embedding vier como string, converte para lista
+            if isinstance(emb_data, str):
+                emb_data = json.loads(emb_data)
+
+            emb = np.array(emb_data, dtype=float)
+            sim = np.dot(emb, query_embedding) / (np.linalg.norm(emb) * np.linalg.norm(query_embedding))
+            similarities.append((sim, v["chunk_text"]))
+
+        similarities.sort(reverse=True, key=lambda x: x[0])
+        top_matches = similarities[:5]  # top 5
+        print(f"[DEBUG] {len(top_matches)} trechos mais similares selecionados.")
+    except Exception as e:
+        print(f"[ERROR] Erro ao calcular similaridades: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao calcular similaridades: {str(e)}")
+
+    # 🔹 Monta contexto consolidado
+    context = "\n\n".join([t[1] for t in top_matches])
+
+    prompt = f"""
+Você é um assistente inteligente que responde perguntas com base no contexto abaixo.
+Use somente as informações fornecidas.
+Se a resposta não estiver presente, diga: "Não encontrei informações suficientes para responder."
+
+Contexto:
+{context}
+
+Pergunta:
+{query}
+    """
+
+    # 🔹 Chama o modelo GPT (se configurado)
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+    if not OPENAI_API_KEY:
+        print("[WARN] Nenhuma OPENAI_API_KEY configurada. Retornando apenas o prompt.")
+        return {"prompt": prompt}
+
+    try:
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": "Você é um assistente que responde com base em informações contextuais."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.4,
+        )
+        answer = response.choices[0].message.content.strip()
+        print(f"[DEBUG] Resposta gerada com sucesso pelo modelo {OPENAI_MODEL}.")
+    except Exception as e:
+        print(f"[ERROR] Erro ao consultar OpenAI: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao consultar OpenAI: {e}")
+
+    return {
+        "query": query,
+        "matches_used": len(top_matches),
+        "response": answer,
+        "model": OPENAI_MODEL,
+        "top_chunks": [t[1][:150] + "..." for t in top_matches]  # prévia opcional
+    }
