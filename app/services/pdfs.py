@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import Dict, Tuple, Optional
 import math
 from sentence_transformers import SentenceTransformer
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from app.core.config import embedding_model, EMBEDDING_MODEL_NAME
 
 
 def upload_pdf(
@@ -336,91 +338,73 @@ def chunk_text(text: str, max_tokens: int = 300) -> list:
 
 def generate_embedding_for_pdf(file_name: str):
     """
-    Gera embeddings a partir de um PDF ja processado.
-    - Busca o Registro no Supabase
-    - Extrai o texto (ou usa o salvo)
-    - Cria chunks
-    - Gera embeddings com SentenceTransformer
-    - Salva na tabela pdf_vectors
-    - Atualiza o status do PDF para "vetorizado"
+    Gera embeddings otimizados para um PDF.
+    Agora:
+    - Usa texto salvo no banco (não baixa PDF)
+    - Reutiliza o modelo global
+    - Salva vetores com pgvector
     """
-
     print(f"[DEBUG] Iniciando geração de embeddings para: {file_name}")
-    SUPABASE_URL = os.environ.get("SUPABASE_URL")
-    SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
-    supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-    EMBEDDING_MODEL = "intfloat/multilingual-e5-small"
 
-    try:
-        record = (
-            supabase_admin.table("pdf_uploads")
-            .select("*")
-            .eq("file_name", file_name)
-            .execute()
-        )
+    SUPABASE_URL = os.getenv("SUPABASE_URL")
+    SUPABASE_KEY = os.getenv("SUPABASE_KEY_ROLE")
+    supabase_admin = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-        if not record.data:
-            raise HTTPException(status_code=404,
-                                detail="PDF não encontrado.")
-        
-        pdf_data = record.data[0]
-        print(f"[DEBUG] Registro encontrado: id={pdf_data['id']} status={pdf_data['status']}")
-    except Exception as e:
-        print(f"[ERROR] Erro ao buscar Registro: {e}")
-        raise HTTPException(status_code=500,
-                            detail=f"Erro ao buscar registro: {str(e)}")
+    # 1. Busca o PDF no banco
+    record = (
+        supabase_admin.table("pdf_uploads")
+        .select("id, full_text, status")
+        .eq("file_name", file_name)
+        .single()
+        .execute()
+    )
+
+    if not record.data:
+        raise HTTPException(status_code=404, detail="PDF não encontrado.")
+
+    pdf_data = record.data
+
+    # 2. Pega o texto
+    if pdf_data.get("full_text"):
+        text = pdf_data["full_text"]
+        print("[DEBUG] Texto carregado do banco.")
+    else:
+        raise HTTPException(status_code=400, detail="Texto não encontrado no banco.")
+
+    # 3. Divide em chunks
     
-    if pdf_data.get("status") != "processado":
-        raise HTTPException(status_code=400,
-                            detail="O PDF ainda não foi processado para gerar embeddings.")
-    
-    print(f"[DEBUG] Extraindo texto do PDF {file_name}...")
-    text_content, _ = download_pdf_and_extract_text(pdf_data["file_path"])
-
-    chunks = chunk_text(text_content)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
+    chunks = splitter.split_text(text)
     print(f"[DEBUG] Texto dividido em {len(chunks)} chunks.")
 
-
+    # 4. Gera embeddings (reutiliza o modelo global)
     try:
-
-        print(f"[DEBUG] Carregando modelo de embeddings: {EMBEDDING_MODEL}...")
-        model = SentenceTransformer(EMBEDDING_MODEL)
-        embeddings = model.encode(chunks, show_progress_bar=True)
-        print(f"[DEBUG] Embeddings gerados com sucesso({len(embeddings)} vetores).")
-
+        embeddings = embedding_model.encode(chunks, show_progress_bar=True)
+        print(f"[DEBUG] {len(embeddings)} embeddings gerados com sucesso.")
     except Exception as e:
-        print(f"[ERROR] Erro ao gerar embeddings: {e}")
-        raise HTTPException(status_code=500,
-                            detail=f"Erro ao gerar embeddings:{e}")
-    
-    try:
-        rows = []
-        for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
-            rows.append({
-                "pdf_id": pdf_data["id"],
-                "chunk_index": i,
-                "chunk_text": chunk,
-                "embedding": emb.tolist(),
-                "embedding_model_used": EMBEDDING_MODEL,
-                "created_at": datetime.utcnow().isoformat()
-            })
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar embeddings: {e}")
 
-        insert_res = supabase_admin.table("pdf_vectors").insert(rows).execute()
-        print(f"[DEBUG] {len(rows)} vetores inseridos no banco com sucesso.")
+    # 5. Insere vetores no banco (pgvector)
+    rows = [
+        {
+            "pdf_id": pdf_data["id"],
+            "chunk_index": i,
+            "chunk_text": chunk,
+            "embedding": emb.tolist(),
+            "embedding_model_used": EMBEDDING_MODEL,
+            "created_at": datetime.utcnow().isoformat(),
+        }
+        for i, (chunk, emb) in enumerate(zip(chunks, embeddings))
+    ]
 
-    except Exception as e:
-        print(f"[ERROR] Erro ao salvar embeddings no banco: {e}")
-        raise HTTPException(status_code=500,
-                            detail=f"Erro ao salvar embeddings: {e}")
-    
-    try:
-        supabase_admin.table("pdf_uploads") \
-            .update({"status": "vetorizado"}) \
-            .eq("id", pdf_data["id"]) \
-            .execute()
-        print(f"[DEBUG] Status do PDF atualizado para 'vetorizado'.")
-    except Exception as e:
-        print(f"[WARN] Falha ao atualizar status: {e}")
+    supabase_admin.table("pdf_vectors").insert(rows).execute()
+    print(f"[DEBUG] {len(rows)} vetores inseridos no banco.")
+
+    # 6. Atualiza status
+    supabase_admin.table("pdf_uploads").update({
+        "status": "vetorizado",
+        "processed_at": datetime.utcnow().isoformat()
+    }).eq("id", pdf_data["id"]).execute()
 
     return {
         "message": f"Embeddings gerados com sucesso para '{file_name}'.",

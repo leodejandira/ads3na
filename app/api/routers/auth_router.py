@@ -23,7 +23,8 @@ from app.services.pdfs import generate_embedding_for_pdf
 import numpy as np
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
-
+from fastapi import Body
+from app.core.config import embedding_model, EMBEDDING_MODEL_NAME
 
 
 router = APIRouter()
@@ -391,18 +392,19 @@ async def delete_pdf_route(display_name: str, user: dict = Depends(get_current_u
         print(f"[ERROR] Erro ao deletar PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")
 
-@router.post("/pdfs/process/{file_name}")
+@router.post("/pdfs/process")
 async def process_pdf_route(
-    file_name: str,
+    body: dict = Body(...),
     user: dict = Depends(get_current_user),
 ):
     """
     Processa um PDF já enviado ao Supabase:
+    - Recebe JSON: { "file_name": "exemplo.pdf" }
     - Busca o registro pelo nome de exibição (file_name)
-    - Obtém o file_path (UUID) correspondente
     - Baixa o PDF do Supabase Storage
     - Extrai o texto com PyMuPDF
     - Atualiza o status para 'processado'
+    - Armazena o texto extraído na coluna 'full_text'
     - Retorna metadados e preview do texto extraído
 
     Somente gerentes podem processar PDFs.
@@ -414,17 +416,20 @@ async def process_pdf_route(
             detail="Acesso negado. Somente gerentes podem processar PDFs.",
         )
 
+    file_name = body.get("file_name")
+    if not file_name:
+        raise HTTPException(status_code=400, detail="Campo 'file_name' é obrigatório no corpo JSON.")
+
     print(f"[DEBUG] Iniciando processamento do PDF: {file_name} pelo usuário {user['email']}")
 
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
     SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-    # 1️⃣ Buscar o registro pelo file_name
     try:
         record = (
             supabase_admin.table("pdf_uploads")
-            .select("*")
+            .select("id, file_path, status")
             .eq("file_name", file_name)
             .limit(1)
             .execute()
@@ -435,23 +440,15 @@ async def process_pdf_route(
             print(f"[ERROR] PDF não encontrado no banco: {file_name}")
             raise HTTPException(status_code=404, detail="PDF não encontrado.")
 
-        # Trata caso de lista aninhada
-        if isinstance(data[0], list):
-            pdf_data = data[0][0]
-        else:
-            pdf_data = data[0]
-
+        pdf_data = data[0]
         file_path = pdf_data.get("file_path")
 
         print(f"[DEBUG] Registro encontrado: id={pdf_data.get('id')} file_path={file_path}")
 
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"[ERROR] Erro ao consultar pdf_uploads: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao consultar registro: {str(e)}")
 
-    # 2️⃣ Extrair o texto do PDF
     try:
         full_text, meta = download_pdf_and_extract_text(
             file_path=file_path,
@@ -459,15 +456,16 @@ async def process_pdf_route(
             expire_seconds=3600,
             save_temp=False,
         )
-        print(f"[DEBUG] Extração concluída: pages={meta.get('pages')} bytes={meta.get('bytes')}")
+        print(f"[DEBUG] Extração concluída: {meta.get('pages')} páginas, {meta.get('bytes')} bytes")
     except Exception as e:
         print(f"[ERROR] Erro na extração do PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao extrair texto do PDF: {str(e)}")
 
-    # 3️⃣ Atualizar o registro no banco (somente status)
     try:
         update_payload = {
-            "status": "processado"
+            "status": "processado",
+            "full_text": full_text,
+            "processed_at": meta.get("downloaded_at"),
         }
 
         update_res = (
@@ -477,10 +475,10 @@ async def process_pdf_route(
             .execute()
         )
 
-        print(f"[DEBUG] Registro atualizado com sucesso (id={pdf_data.get('id')}, status=processado).")
+        print(f"[DEBUG] Registro atualizado (id={pdf_data.get('id')}, status=processado).")
 
     except Exception as e:
-        print(f"[ERROR] Erro ao atualizar registro: {e}")
+        print(f"[ERROR] Erro ao atualizar registro no banco: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar registro: {str(e)}")
 
     return {
@@ -489,28 +487,25 @@ async def process_pdf_route(
         "text_preview": full_text[:800] + "..." if len(full_text) > 800 else full_text,
     }
 
-
-@router.post("/pdfs/embed/{file_name}")
-async def embed_pdf_rout(file_name: str, user: dict = Depends(get_current_user)):
+@router.post("/pdfs/embed")
+async def embed_pdf_route(
+    body: dict = Body(...),
+    user: dict = Depends(get_current_user)
+):
     """
-    Gera embeddings para um PDF processado e salva na tabela pdf_vectores.
+    Gera embeddings para um PDF processado.
+    Recebe JSON: { "file_name": "exemplo.pdf" }
     """
-
     if user.get("role") != "gerente":
-        raise HTTPException(
-            status_code=403,
-            detail="Acesso negado. Somente gerentes podem gerar embeddings."
-        )
-    
-    print(f"[DEBUG] Iniciando rota de embeddings para {file_name}")
+        raise HTTPException(status_code=403, detail="Apenas gerentes podem gerar embeddings.")
+
+    file_name = body.get("file_name")
+    if not file_name:
+        raise HTTPException(status_code=400, detail="Campo 'file_name' é obrigatório no corpo JSON.")
+
+    print(f"[DEBUG] Iniciando embeddings para '{file_name}' pelo usuário {user['email']}")
     result = generate_embedding_for_pdf(file_name)
     return result
-
-
-# 🔹 Cache global do modelo de embeddings (carregado 1x)
-EMBEDDING_MODEL_NAME = "intfloat/multilingual-e5-small"
-model = SentenceTransformer(EMBEDDING_MODEL_NAME)
-print(f"[INIT] Modelo de embeddings '{EMBEDDING_MODEL_NAME}' carregado com sucesso ✅")
 
 
 @router.post("/pdfs/query")
@@ -524,7 +519,7 @@ async def query_pdf_route(
     - Gera embedding da pergunta
     - Busca embeddings mais similares no Supabase
     - Monta prompt com contexto
-    - Chama o modelo GPT configurado
+    - Chama o modelo GPT configurado (OpenAI)
     """
 
     # 🔒 Validação de permissão
@@ -544,8 +539,8 @@ async def query_pdf_route(
 
     # 🔹 Gera embedding da pergunta
     try:
-        query_embedding = model.encode([query])[0].tolist()
-        print("[DEBUG] Embedding da pergunta gerado com sucesso.")
+        query_embedding = embedding_model.encode([query])[0].tolist()
+        print(f"[DEBUG] Embedding da pergunta gerado com sucesso usando {EMBEDDING_MODEL_NAME}.")
     except Exception as e:
         print(f"[ERROR] Erro ao gerar embedding da consulta: {e}")
         raise HTTPException(status_code=500, detail="Erro ao gerar embedding da pergunta.")
@@ -566,23 +561,20 @@ async def query_pdf_route(
         similarities = []
         for v in all_vectors:
             emb_data = v["embedding"]
-
-            # Se o embedding vier como string, converte para lista
             if isinstance(emb_data, str):
                 emb_data = json.loads(emb_data)
-
             emb = np.array(emb_data, dtype=float)
             sim = np.dot(emb, query_embedding) / (np.linalg.norm(emb) * np.linalg.norm(query_embedding))
             similarities.append((sim, v["chunk_text"]))
 
         similarities.sort(reverse=True, key=lambda x: x[0])
-        top_matches = similarities[:5]  # top 5
+        top_matches = similarities[:5]  # top 5 trechos mais similares
         print(f"[DEBUG] {len(top_matches)} trechos mais similares selecionados.")
     except Exception as e:
         print(f"[ERROR] Erro ao calcular similaridades: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao calcular similaridades: {str(e)}")
 
-    # 🔹 Monta contexto consolidado
+    # 🔹 Monta o contexto consolidado
     context = "\n\n".join([t[1] for t in top_matches])
 
     prompt = f"""
@@ -597,16 +589,29 @@ Pergunta:
 {query}
     """
 
-    # 🔹 Chama o modelo GPT (se configurado)
+    # 🔹 Configurações do modelo OpenAI
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
     if not OPENAI_API_KEY:
         print("[WARN] Nenhuma OPENAI_API_KEY configurada. Retornando apenas o prompt.")
-        return {"prompt": prompt}
+        return {
+            "query": query,
+            "matches_used": len(top_matches),
+            "response": "Chave da OpenAI não configurada — retornando somente o contexto.",
+            "model": None,
+        }
 
+    # 🔹 Cliente OpenAI (forma correta com SDK 1.51.0)
     try:
-        client = OpenAI(api_key=OPENAI_API_KEY)
+        # garante que a variável esteja no ambiente
+        os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+
+        # instancia o client sem parâmetros
+        client = OpenAI()
+
+        print(f"[DEBUG] Cliente OpenAI inicializado. Usando modelo {OPENAI_MODEL}.")
+
         response = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[
@@ -614,17 +619,24 @@ Pergunta:
                 {"role": "user", "content": prompt},
             ],
             temperature=0.4,
+            max_tokens=1000
         )
+
         answer = response.choices[0].message.content.strip()
         print(f"[DEBUG] Resposta gerada com sucesso pelo modelo {OPENAI_MODEL}.")
-    except Exception as e:
-        print(f"[ERROR] Erro ao consultar OpenAI: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro ao consultar OpenAI: {e}")
 
+    except Exception as e:
+        print(f"[ERROR] Erro ao consultar OpenAI: {str(e)}")
+        answer = (
+            f"✅ Consulta realizada com sucesso! Foram encontrados {len(top_matches)} trechos relevantes nos PDFs. "
+            f"Resposta do modelo GPT temporariamente indisponível - aqui estão os trechos encontrados: "
+            f"{' | '.join([t[1][:100] + '...' for t in top_matches])}"
+        )
+
+    # 🔹 Retorno final da resposta RAG
     return {
         "query": query,
         "matches_used": len(top_matches),
         "response": answer,
         "model": OPENAI_MODEL,
-        "top_chunks": [t[1][:150] + "..." for t in top_matches]  # prévia opcional
     }

@@ -2,7 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from supabase import Client, create_client
-
+from sentence_transformers import SentenceTransformer
 """
 Demonstração de autenticação no Supabase.
 
@@ -18,7 +18,7 @@ key: str = os.getenv("SUPABASE_KEY")
 
 supabase: Client = create_client(url, key)
 
-auth_response = supabase.auth.sign_in_with_password(
+"""auth_response = supabase.auth.sign_in_with_password(
     {"email": "frank.miranda12@hotmail.com", "password": "host8899"}
 )
 
@@ -34,3 +34,6 @@ session = auth_response.session
 access_token = session.access_token
 
 print("Token JWT:", access_token)
+"""
+EMBEDDING_MODEL_NAME = "thenlper/gte-small"
+embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
