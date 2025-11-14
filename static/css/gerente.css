@@ -1,0 +1,137 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #eef1f5 100%);
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(to bottom right, #f5f7fa, #f5f7fa, #edf0f4);
+}
+
+.content {
+    width: 100%;
+    max-width: 448px;
+    padding: 48px 24px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.title {
+    font-size: 3.75rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #5b9dd9, #8b7bd8, #b47dd6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+}
+
+.subtitle {
+    color: #6b7280;
+    font-size: 1.125rem;
+    line-height: 1.6;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.btn {
+    height: 56px;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 32px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1e293b;
+    background-color: #ffffff;
+    border: 2px solid rgba(139, 92, 246, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.btn:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.1), 0 4px 6px -2px rgba(139, 92, 246, 0.05);
+    transform: scale(1.02);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn:focus {
+    outline: none;
+    ring: 2px solid #8b5cf6;
+    ring-offset: 2px;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+    .title {
+        font-size: 3rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+    }
+    
+    .content {
+        padding: 32px 16px;
+    }
+}
+
+/* Dark mode (opcional) */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    
+    .container {
+        background: linear-gradient(to bottom right, #0f172a, #0f172a, #1a202e);
+    }
+    
+    .subtitle {
+        color: #94a3b8;
+    }
+    
+    .btn {
+        background-color: #1e293b;
+        color: #f8fafc;
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+    
+    .btn:hover {
+        border-color: rgba(139, 92, 246, 0.5);
+        background-color: #334155;
+    }
+}

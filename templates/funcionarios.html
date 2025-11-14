@@ -1,137 +1,39 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Funcionários</title>
-    <style>
-        body { margin: 20px; font-family: Arial; }
-        .loading { text-align: center; padding: 20px; }
-        .content { text-align: center; }
-        button { 
-            display: block; 
-            margin: 10px auto; 
-            padding: 10px 20px; 
-            width: 200px;
-            cursor: pointer;
-        }
-        input, select {
-            display: block;
-            margin: 10px auto;
-            padding: 8px;
-            width: 300px;
-        }
-        table {
-            margin: 20px auto;
-            border-collapse: collapse;
-            width: 80%;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        #message {
-            margin: 20px auto;
-            padding: 10px;
-            max-width: 500px;
-            text-align: left;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
+    <title>Gerenciar Funcionários - MindDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/funcionarios.css') }}">
 </head>
 <body>
-    <div id="authCheck" class="loading">Verificando autenticação...</div>
+    <div class="container">
+        <div class="content">
 
-    <div id="mainContent" class="content" style="display:none;">
-        <h1>GERENCIAR FUNCIONÁRIOS</h1>
+            <!-- Formulário de Registro -->
+            <section class="register-section">
+                <h1 class="section-title">Registrar Novo Funcionário</h1>
+                
+                <form class="register-form" id="registerForm">
+                    <input type="text" id="name" class="form-input" placeholder="Nome" required>
+                    <input type="email" id="email" class="form-input" placeholder="usergen@example.com" required>
+                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+                    
+                    <select id="role" class="form-select" required>
+                        <option value="usuario">Usuário</option>
+                        <option value="gerente">Gerente</option>
+                    </select>
+                    
+                    <button type="submit" class="btn btn-primary">Registrar</button>
+                </form>
+            </section>
 
-        <h2>Registrar Novo Funcionário</h2>
-        <form id="registerForm">
-            <input type="text" id="name" name="name" placeholder="Nome" required>
-            <input type="email" id="email" name="email" placeholder="E-mail" required>
-            <input type="password" id="senha" name="senha" placeholder="Senha" required>
-            <select id="role" name="role" required>
-                <option value="usuario">Usuário</option>
-                <option value="gerente">Gerente</option>
-            </select>
-            <button type="submit" id="submitBtn">Registrar</button>
-        </form>
-
-        <div id="message"></div>
-
-        <h2>Funcionários Existentes</h2>
-        <div id="usersList"></div>
-
-        <button onclick="window.location.href='/gerente'">Voltar</button>
-    </div>
-
-    <script>
-        // Variável global para o token
-        let token = localStorage.getItem('access_token');
-        const authCheck = document.getElementById('authCheck');
-        const mainContent = document.getElementById('mainContent');
-
-        if (!token) {
-            window.location.href = '/login';
-        } else {
-            // Verifica se é gerente
-            fetch('/rota-gerente', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    authCheck.style.display = 'none';
-                    mainContent.style.display = 'block';
-                    loadUsers();
-                } else {
-                    localStorage.removeItem('access_token');
-                    window.location.href = '/login';
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                window.location.href = '/login';
-            });
-        }
-
-        // Carregar lista de usuários
-        function loadUsers() {
-            fetch('/usuarios', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Erro ao carregar usuários: ' + response.status);
-                }
-                return response.json();
-            })
-            .then(users => {
-                const usersList = document.getElementById('usersList');
-                if (users.length === 0) {
-                    usersList.innerHTML = '<p>Nenhum usuário cadastrado.</p>';
-                    return;
-                }
-
-                let table = `
-                    <table>
+            <!-- Lista de Funcionários -->
+            <section class="employees-section">
+                <h2 class="section-title">Funcionários Existentes</h2>
+                
+                <div class="table-container">
+                    <table class="employees-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -141,135 +43,17 @@
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody>
-                `;
-
-                users.forEach(user => {
-                    table += `
-                        <tr>
-                            <td>${user.id}</td>
-                            <td>${user.name}</td>
-                            <td>${user.email}</td>
-                            <td>${user.role}</td>
-                            <td>
-                                <button onclick="deleteUser(${user.id})">Deletar</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                table += `
+                        <tbody id="employeesTableBody">
+                            <!-- preenchido via JS -->
                         </tbody>
                     </table>
-                `;
-
-                usersList.innerHTML = table;
-            })
-            .catch(error => {
-                console.error('Erro ao carregar usuários:', error);
-                showMessage('Erro ao carregar lista de usuários: ' + error.message, 'error');
-            });
-        }
-
-        // Registrar novo usuário
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            console.log('Tentando registrar usuário...');
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const messageDiv = document.getElementById('message');
-            
-            // Reset message
-            if (messageDiv) {
-                messageDiv.innerHTML = '';
-                messageDiv.className = '';
-            }
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Registrando...';
-            
-            const formData = {
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                senha: document.getElementById('senha').value,
-                role: document.getElementById('role').value
-            };
-
-            console.log('Dados do formulário:', formData);
-            console.log('Token:', token ? 'Presente' : 'Ausente');
-            
-            try {
-                const response = await fetch('/register', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(formData)
-                });
+                </div>
                 
-                console.log('Status da resposta:', response.status);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Erro na resposta:', errorText);
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-                
-                const result = await response.json();
-                console.log('Resultado:', result);
-                
-                showMessage(`Usuário ${result.name} registrado com sucesso!`, 'success');
-                // Reset form
-                document.getElementById('registerForm').reset();
-                // Reload users list
-                loadUsers();
-                
-            } catch (error) {
-                console.error('Erro no registro:', error);
-                showMessage('Erro ao registrar: ' + error.message, 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Registrar';
-            }
-        });
+                <button class="btn btn-back" id="backBtn">Voltar</button>
+            </section>
+        </div>
+    </div>
 
-        // Deletar usuário
-        window.deleteUser = async function(userId) {
-            if (!confirm('Tem certeza que deseja deletar este usuário?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/usuarios/${userId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-
-                const result = await response.json();
-                showMessage(`Usuário deletado com sucesso!`, 'success');
-                loadUsers();
-            } catch (error) {
-                console.error('Erro ao deletar usuário:', error);
-                showMessage('Erro ao deletar: ' + error.message, 'error');
-            }
-        };
-        
-        function showMessage(message, type) {
-            const messageDiv = document.getElementById('message');
-            if (!messageDiv) {
-                console.error('Elemento message não encontrado no DOM');
-                return;
-            }
-            messageDiv.innerHTML = message;
-            messageDiv.className = type;
-        }
-    </script>
+    <script src="{{ url_for('static', path='js/funcionarios.js') }}"></script>
 </body>
 </html>

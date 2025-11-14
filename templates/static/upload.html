@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="upload-styles.css">
+    <title>MindDesk - Upload de Arquivos</title>
+</head>
+<body>
+    <main class="container">
+        <!-- Upload Section -->
+        <div class="upload-container">
+            <h1>Upload de Arquivos</h1>
+            
+            <div class="drop-zone" id="dropZone">
+                <i class='bx bx-cloud-upload'></i>
+                <p class="drop-text">Arraste e solte seus arquivos aqui</p>
+                <p class="drop-subtext">ou clique para selecionar</p>
+                <button type="button" class="select-btn">Selecionar Arquivos</button>
+                <input type="file" id="fileInput" multiple hidden>
+            </div>
+
+            <div class="selected-files" id="selectedFiles" style="display: none;">
+                <h3>Arquivos Selecionados (<span id="fileCount">0</span>)</h3>
+                <div id="fileList"></div>
+                <button type="button" class="upload-btn" id="uploadBtn">Fazer Upload</button>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-container">
+            <div class="table-header">
+                <h2>Arquivos Salvos</h2>
+                <div class="search-box">
+                    <i class='bx bx-search'></i>
+                    <input type="text" id="searchInput" placeholder="Buscar arquivos...">
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="files-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tamanho</th>
+                            <th>Enviado por</th>
+                            <th>Data</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td>
+                                <div class="file-info">
+                                    <i class='bx bxs-file-pdf'></i>
+                                    <span>Contrato_Trabalho_2024.pdf</span>
+                                </div>
+                            </td>
+                            <td>2.34 MB</td>
+                            <td>Maria Silva</td>
+                            <td>15/01/2024 10:30</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn" title="Visualizar">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="action-btn" title="Download">
+                                        <i class='bx bx-download'></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" title="Deletar">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="file-info">
+                                    <i class='bx bxs-file'></i>
+                                    <span>Folha_Pagamento_Janeiro.xlsx</span>
+                                </div>
+                            </td>
+                            <td>1.18 MB</td>
+                            <td>João Santos</td>
+                            <td>10/01/2024 14:20</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn" title="Visualizar">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="action-btn" title="Download">
+                                        <i class='bx bx-download'></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" title="Deletar">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="file-info">
+                                    <i class='bx bxs-image'></i>
+                                    <span>Foto_Perfil_Colaborador.jpg</span>
+                                </div>
+                            </td>
+                            <td>554 KB</td>
+                            <td>Ana Costa</td>
+                            <td>05/01/2024 09:15</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn" title="Visualizar">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="action-btn" title="Download">
+                                        <i class='bx bx-download'></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" title="Deletar">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-footer">
+                <p>Total: <span id="totalFiles">3</span> arquivo(s)</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="upload-script.js"></script>
+</body>
+</html>
