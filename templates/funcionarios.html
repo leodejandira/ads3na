@@ -1,37 +1,31 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Funcionários - MindDesk</title>
+    <title>Gerenciar Funcionários - Sistema de Gestão</title>
+    <meta name="description" content="Sistema de gerenciamento de funcionários - Registrar e gerenciar usuários">
     <link rel="stylesheet" href="{{ url_for('static', path='css/funcionarios.css') }}">
 </head>
+
 <body>
     <div class="container">
         <div class="content">
 
-            <!-- Formulário de Registro -->
-            <section class="register-section">
-                <h1 class="section-title">Registrar Novo Funcionário</h1>
-                
-                <form class="register-form" id="registerForm">
-                    <input type="text" id="name" class="form-input" placeholder="Nome" required>
-                    <input type="email" id="email" class="form-input" placeholder="usergen@example.com" required>
-                    <input type="password" id="password" class="form-input" placeholder="••••••••" required>
-                    
-                    <select id="role" class="form-select" required>
-                        <option value="usuario">Usuário</option>
-                        <option value="gerente">Gerente</option>
-                    </select>
-                    
-                    <button type="submit" class="btn btn-primary">Registrar</button>
-                </form>
-            </section>
-
+            <div class="button-row">
+                <button class="btn btn-back action-btn"
+                    href="{{ url_for('static', path='templates/maneger_home.html') }}">
+                    Voltar
+                </button>
+                <button id="btn-open-modal" class="btn btn-primary action-btn">
+                    Cadastrar Funcionário
+                </button>
+            </div>
             <!-- Lista de Funcionários -->
             <section class="employees-section">
                 <h2 class="section-title">Funcionários Existentes</h2>
-                
+
                 <div class="table-container">
                     <table class="employees-table">
                         <thead>
@@ -43,17 +37,78 @@
                                 <th>Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="employeesTableBody">
-                            <!-- preenchido via JS -->
+                        <tbody>
+                            <tr>
+                                <td>2</td>
+                                <td>Frank (Gerente)</td>
+                                <td>frank@hotmail.com</td>
+                                <td>gerente</td>
+                                <td>
+                                    <button class="btn btn-delete">Deletar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>string</td>
+                                <td>usergen@example.com</td>
+                                <td>gerente</td>
+                                <td>
+                                    <button class="btn btn-delete">Deletar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>peao</td>
+                                <td>funcionario@hotmail.com</td>
+                                <td>usuário</td>
+                                <td>
+                                    <button class="btn btn-delete">Deletar</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td>gerente</td>
+                                <td>gerente@hotmail.com</td>
+                                <td>gerente</td>
+                                <td>
+                                    <button class="btn btn-delete">Deletar</button>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-                
-                <button class="btn btn-back" id="backBtn">Voltar</button>
+
+
             </section>
         </div>
     </div>
+    <!-- ========== MODAL ========== -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title">Cadastrar Funcionário</h2>
+            <form class="modal-form">
+                <input type="text" class="form-input" placeholder="Nome" required>
+                <input type="email" class="form-input" placeholder="usergen@example.com" required>
+                <input type="password" class="form-input" placeholder="••••••••" required>
+
+                <select class="form-select" required>
+                    <option value="usuario">Usuário</option>
+                    <option value="gerente">Gerente</option>
+                </select>
+
+                <button type="submit" class="btn btn-primary">Registrar</button>
+            </form>
+
+            <button id="btn-close-modal" class="btn btn-back" style="margin-top: 20px;">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+
 
     <script src="{{ url_for('static', path='js/funcionarios.js') }}"></script>
+
 </body>
+
 </html>

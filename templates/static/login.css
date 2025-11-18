@@ -219,31 +219,4 @@ body {
     .esqueceu-senha label {
         color: #cbd5e1;
     }
-
-    .input-group {
-        text-align: left;
-        width: 100%;
-        margin-top: 14px;
-    }
-   
-    .input-group label {
-        font-size: 0.9rem;
-        color: #334155;
-        font-weight: 600;
-        margin-bottom: 6px;
-        display: block;
-    }
-    @media (prefers-color-scheme: dark) {
-        .input-group label {
-            color: #e2e8f0;
-        }
-    }
-    .subtitle {
-        color: #64748b;
-        font-size: 0.95rem;
-        margin-top: 4px;
-        margin-bottom: 28px;
-        font-weight: 600; 
-    }
-           
 }

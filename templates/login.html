@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', path='css/login.css') }}">
+    <title>MindDesk Login</title>
+</head>
+
+<body>
+    <main class="container">
+        <form id="loginForm">
+
+            <div class="logo-area">
+                <img src="static/images/logo.png" alt="MindDesk" class="logo">
+                <h1 class="title">Login</h1>
+                <p class="subtitle">Acesse sua conta para continuar usando o MindDesk</p>
+            </div>
+
+            <div class="input-group">
+                <label for="emailInput">E-mail</label>
+                <div class="input-box">
+                    <input id="emailInput" placeholder="Digite seu e-mail" type="email">
+                    <i class="bx bxs-user"></i>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="passwordInput">Senha</label>
+                <div class="input-box">
+                    <input id="passwordInput" placeholder="Digite sua senha" type="password">
+                    <i class="bx bxs-lock-alt"></i>
+                </div>
+            </div>
+
+            <div class="esqueceu-senha">
+                <label>
+                    <input type="checkbox"> Lembrar de mim
+                </label>
+            </div>
+
+            <button type="submit" class="Login">Entrar</button>
+
+            <p id="loginError" class="error-message" style="display: none;">
+                E-mail ou senha inválidos
+            </p>
+
+
+        </form>
+    </main>
+
+    <script src="{{ url_for('static', path='js/login.js') }}"></script>
+</body>
+
+</html>

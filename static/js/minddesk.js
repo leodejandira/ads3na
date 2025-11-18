@@ -1,41 +1,73 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const usernameEl = document.getElementById("username");
-    const storedName = localStorage.getItem("username");
-    if (storedName) {
-        usernameEl.textContent = storedName;
-    }
+const sidebar = document.getElementById("sidebar");
+const openSidebar = document.getElementById("openSidebar");
+const closeSidebar = document.getElementById("closeSidebar");
+const overlay = document.getElementById("sidebarOverlay");
 
-    const form = document.getElementById("chatForm");
-    const input = document.getElementById("chatInput");
+// Abrir menu
+openSidebar.addEventListener("click", () => {
+    sidebar.classList.add("open");
+    overlay.classList.add("visible");
+});
+
+// Fechar no botão
+closeSidebar.addEventListener("click", () => {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("visible");
+});
+
+// Fechar clicando fora
+overlay.addEventListener("click", () => {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("visible");
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const chatForm = document.getElementById("chatForm");
+    const chatInput = document.getElementById("chatInput");
     const messagesContainer = document.getElementById("messagesContainer");
     const emptyState = document.getElementById("emptyState");
 
-    form.addEventListener("submit", (e) => {
+    // Enviar mensagem
+    chatForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const message = input.value.trim();
-        if (!message) return;
 
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        // criar elemento da mensagem do usuário
+        const messageEl = document.createElement("div");
+        messageEl.classList.add("message", "user-message");
+        messageEl.innerHTML = `
+            <div class="bubble user-bubble">${text}</div>
+        `;
+
+        // esconder empty state
         emptyState.style.display = "none";
         messagesContainer.style.display = "block";
 
-        // Adiciona mensagem do usuário
-        const userMsg = document.createElement("div");
-        userMsg.className = "message user";
-        userMsg.textContent = message;
-        messagesContainer.appendChild(userMsg);
+        // adicionar mensagem na tela
+        messagesContainer.appendChild(messageEl);
 
-        // Simula resposta do MindDesk
-        const botMsg = document.createElement("div");
-        botMsg.className = "message bot";
-        botMsg.textContent = "🤖 Processando sua solicitação...";
-        messagesContainer.appendChild(botMsg);
-
-        input.value = "";
+        // rolar até o final
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        // Simulação de resposta
+        // limpar input
+        chatInput.value = "";
+
+        // (opcional) simular resposta da IA depois
         setTimeout(() => {
-            botMsg.textContent = "Aqui está a resposta simulada do MindDesk.";
-        }, 1500);
+            receiveMessage("Mensagem recebida! Vou te ajudar");
+        }, 600);
     });
+
+    // Função para mensagem da IA
+    function receiveMessage(text) {
+        const messageEl = document.createElement("div");
+        messageEl.classList.add("message", "ai-message");
+        messageEl.innerHTML = `
+            <div class="bubble ai-bubble">${text}</div>
+        `;
+        messagesContainer.appendChild(messageEl);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
 });

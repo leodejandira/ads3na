@@ -397,7 +397,6 @@ body {
         background-color: #334155;
         border-color: #475569;
     }
-    
 
     .drop-zone:hover,
     .drop-zone.drag-over {
@@ -487,5 +486,137 @@ body {
     .upload-btn:hover {
         background: linear-gradient(to right, #4a8bc8, #7a6ac7);
         box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.4);
+    }
+}
+/* Botão de voltar (estilo fixo) */
+.btn-back {
+    background-color: #1e293b;
+    color: #ffffff;
+    border: 2px solid rgba(139, 92, 246, 0.4);
+    min-width: 180px;
+    height: 48px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+
+/* Hover */
+.btn-back:hover {
+    background-color: #273349;
+    border-color: rgba(139, 92, 246, 0.6);
+    transform: translateY(-2px);
+    color: #ffffff;
+
+}
+/* RESPONSIVIDADE — MOBILE & TABLET */
+@media (max-width: 1024px) {
+
+    body {
+        padding: 16px;
+    }
+
+    .container {
+        max-width: 100%;
+        gap: 32px;
+    }
+
+    .upload-container,
+    .table-container {
+        padding: 24px;
+    }
+
+    .upload-container h1,
+    .table-header h2 {
+        font-size: 1.6rem;
+    }
+
+    .button-row {
+        justify-content: flex-start;
+        padding-left: 0;
+    }
+
+    .btn-back {
+        width: 180px;
+    }
+}
+
+/* MOBILE — ATÉ 768px */
+@media (max-width: 768px) {
+
+    body {
+        padding: 12px;
+    }
+
+    .container {
+        gap: 24px;
+    }
+
+    /* Botão voltar ocupa largura total */
+    .button-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .btn-back {
+        width: 100%;
+        height: 48px;
+        font-size: 1rem;
+    }
+
+    .upload-container,
+    .table-container {
+        padding: 20px 16px;
+        border-radius: 12px;
+    }
+
+    .drop-zone {
+        padding: 28px 12px;
+    }
+
+    /* Tabela com scroll horizontal suave */
+    .table-wrapper {
+        overflow-x: auto;
+        border-radius: 10px;
+        -webkit-overflow-scrolling: touch;
+        margin-left: -12px;
+        margin-right: -12px;
+    }
+
+    .files-table {
+        min-width: 650px;
+        font-size: 0.85rem;
+    }
+
+    .files-table th,
+    .files-table td {
+        padding: 10px 6px;
+    }
+
+    /* Barra de busca 100% */
+    .search-box {
+        width: 100%;
+    }
+
+    /* Títulos menores */
+    .upload-container h1,
+    .table-header h2 {
+        font-size: 1.4rem;
+        margin-bottom: 16px;
+    }
+}
+
+/* MODAL OU ELEMENTOS FIXOS (SE TIVER)*/
+@media (max-width: 600px) {
+    .drop-zone {
+        border-radius: 10px;
+    }
+
+    .select-btn,
+    .upload-btn {
+        height: 46px;
+        font-size: 0.95rem;
     }
 }

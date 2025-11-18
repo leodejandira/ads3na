@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="css/upload-styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/upload-styles.css') }}">
     <title>MindDesk - Upload de Arquivos</title>
-
-    <!-- Ícones (Boxicons) -->
-    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-
-    <!-- CSS -->
-    <link rel="stylesheet" href="/static/upload-styles.css">
 </head>
+
 <body>
     <main class="container">
+        <div class="button-row">
+            <button class="btn btn-back action-btn">
+                Voltar
+            </button>
+        </div>
         <!-- Upload Section -->
         <div class="upload-container">
             <h1>Upload de Arquivos</h1>
@@ -54,19 +58,89 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <!-- Arquivos carregados dinamicamente via JS -->
+                        <tr>
+                            <td>
+                                <div class="file-info">
+                                    <i class='bx bxs-file-pdf'></i>
+                                    <span>Contrato_Trabalho_2024.pdf</span>
+                                </div>
+                            </td>
+                            <td>2.34 MB</td>
+                            <td>Maria Silva</td>
+                            <td>15/01/2024 10:30</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn" title="Visualizar">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="action-btn" title="Download">
+                                        <i class='bx bx-download'></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" title="Deletar">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="file-info">
+                                    <i class='bx bxs-file'></i>
+                                    <span>Folha_Pagamento_Janeiro.xlsx</span>
+                                </div>
+                            </td>
+                            <td>1.18 MB</td>
+                            <td>João Santos</td>
+                            <td>10/01/2024 14:20</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn" title="Visualizar">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="action-btn" title="Download">
+                                        <i class='bx bx-download'></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" title="Deletar">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="file-info">
+                                    <i class='bx bxs-image'></i>
+                                    <span>Foto_Perfil_Colaborador.jpg</span>
+                                </div>
+                            </td>
+                            <td>554 KB</td>
+                            <td>Ana Costa</td>
+                            <td>05/01/2024 09:15</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="action-btn" title="Visualizar">
+                                        <i class='bx bx-show'></i>
+                                    </button>
+                                    <button class="action-btn" title="Download">
+                                        <i class='bx bx-download'></i>
+                                    </button>
+                                    <button class="action-btn delete-btn" title="Deletar">
+                                        <i class='bx bx-trash'></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="table-footer">
-                <p>Total: <span id="totalFiles">0</span> arquivo(s)</p>
-                
+                <p>Total: <span id="totalFiles">3</span> arquivo(s)</p>
             </div>
         </div>
     </main>
 
-    <!-- Script -->
-    <script src="/static/upload-script.js"></script>
+    <script src="js/upload-script.js"></script>
 </body>
+
 </html>
