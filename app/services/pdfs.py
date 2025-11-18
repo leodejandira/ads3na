@@ -391,7 +391,7 @@ def generate_embedding_for_pdf(file_name: str):
             "chunk_index": i,
             "chunk_text": chunk,
             "embedding": emb.tolist(),
-            "embedding_model_used": EMBEDDING_MODEL,
+            "embedding_model_used": EMBEDDING_MODEL_NAME,
             "created_at": datetime.utcnow().isoformat(),
         }
         for i, (chunk, emb) in enumerate(zip(chunks, embeddings))
@@ -409,5 +409,5 @@ def generate_embedding_for_pdf(file_name: str):
     return {
         "message": f"Embeddings gerados com sucesso para '{file_name}'.",
         "chunks": len(chunks),
-        "model": EMBEDDING_MODEL
+        "model": EMBEDDING_MODEL_NAME
     }
