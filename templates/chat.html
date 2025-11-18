@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Teste</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 20px auto; padding: 20px; }
+        #chat { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; }
+        #messages { height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; }
+        .message { margin: 5px 0; padding: 8px; border-radius: 5px; }
+        .user { background: #e3f2fd; text-align: right; }
+        .bot { background: #f5f5f5; }
+        input, button { padding: 10px; margin: 5px; }
+        input { width: 70%; }
+    </style>
+</head>
+<body>
+    <h1>💬 Chat Teste</h1>
+    
+    <div id="chat">
+        <div id="messages"></div>
+        <input type="text" id="question" placeholder="Digite sua pergunta..." />
+        <button onclick="sendQuestion()">Enviar</button>
+    </div>
+
+    <script>
+        async function sendQuestion() {
+            const question = document.getElementById('question').value;
+            if (!question) return;
+
+            // Adiciona pergunta do usuário
+            addMessage(question, 'user');
+            document.getElementById('question').value = '';
+
+            try {
+                const token = localStorage.getItem('token'); // Assume que o token está salvo
+                
+                const response = await fetch('/pdfs/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ query: question })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addMessage(data.response, 'bot');
+                } else {
+                    addMessage(`Erro: ${data.detail}`, 'bot');
+                }
+            } catch (error) {
+                addMessage('Erro de conexão', 'bot');
+            }
+        }
+
+        function addMessage(text, type) {
+            const messages = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Enter para enviar
+        document.getElementById('question').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendQuestion();
+        });
+    </script>
+</body>
+</html>

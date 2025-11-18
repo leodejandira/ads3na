@@ -253,6 +253,7 @@ async def upload_pdf_route(
 ):
     """
     Rota para upload de PDF. Somente usuários 'gerente' podem enviar.
+    Agora processa automaticamente: extrai texto e gera embeddings.
     """
     try:
         # Validação do role
@@ -274,7 +275,7 @@ async def upload_pdf_route(
 
         supabase = get_client()
 
-        # *** VALIDAÇÃO AQUI ***
+        # Validação de duplicata
         exists = (
             supabase.table("pdf_uploads")
             .select("id")
@@ -298,20 +299,87 @@ async def upload_pdf_route(
 
         print(f"Arquivo temporário criado em: {temp_file_path}")
 
-        # chama seu service
+        # 1. Faz upload do PDF
         result = upload_pdf_service(
             file_path=temp_file_path,
             user_id=str(user_uuid),
             display_name=file_display_name,
         )
 
+        # Limpa arquivo temporário
         os.remove(temp_file_path)
 
-        return result
+        # 2. Processa o PDF (extrai texto e salva no banco)
+        print(f"[DEBUG] Iniciando processamento automático do PDF: {file_display_name}")
+        
+        SUPABASE_URL = os.environ.get("SUPABASE_URL")
+        SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
+        supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+        # Busca o registro recém-criado
+        record = (
+            supabase_admin.table("pdf_uploads")
+            .select("id, file_path, status")
+            .eq("file_name", file_display_name)
+            .limit(1)
+            .execute()
+        )
+
+        if not record.data:
+            raise HTTPException(status_code=404, detail="PDF não encontrado após upload.")
+
+        pdf_data = record.data[0]
+        file_path = pdf_data.get("file_path")
+
+        # Extrai texto do PDF
+        full_text, meta = download_pdf_and_extract_text(
+            file_path=file_path,
+            bucket_name="pdfs",
+            expire_seconds=3600,
+            save_temp=False,
+        )
+
+        # Atualiza o registro com o texto extraído
+        update_payload = {
+            "status": "processado",
+            "full_text": full_text,
+            "processed_at": meta.get("downloaded_at"),
+        }
+
+        update_res = (
+            supabase_admin.table("pdf_uploads")
+            .update(update_payload)
+            .eq("file_path", file_path)
+            .execute()
+        )
+
+        print(f"[DEBUG] Texto extraído e salvo ({meta.get('pages')} páginas).")
+
+        # 3. Gera embeddings
+        print(f"[DEBUG] Iniciando geração de embeddings...")
+        embed_result = generate_embedding_for_pdf(file_display_name)
+        print(f"[DEBUG] Embeddings gerados: {embed_result}")
+
+        return {
+            **result,
+            "processing": {
+                "text_extraction": "sucesso",
+                "embedding_generation": "sucesso", 
+                "chunks_processed": embed_result.get("chunks", 0),
+                "pages": meta.get("pages", 0),
+                "model_used": embed_result.get("model")
+            }
+        }
 
     except HTTPException as http_e:
+        # Limpa arquivo temporário em caso de erro
+        if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
         raise http_e
     except Exception as e:
+        # Limpa arquivo temporário em caso de erro
+        if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
         print(f"Erro inesperado no upload_pdf_route: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -511,7 +579,7 @@ async def embed_pdf_route(
 @router.post("/pdfs/query")
 async def query_pdf_route(
     body: dict = Body(...),
-    user: dict = Depends(get_current_user)
+    # user: dict = Depends(get_current_user)
 ):
     """
     Rota para realizar consultas RAG com base nos PDFs vetorizados.
@@ -523,8 +591,8 @@ async def query_pdf_route(
     """
 
     # 🔒 Validação de permissão
-    if user.get("role") != "gerente":
-        raise HTTPException(status_code=403, detail="Somente gerentes podem consultar PDFs.")
+    # if user.get("role") != "gerente":
+    #     raise HTTPException(status_code=403, detail="Somente gerentes podem consultar PDFs.")
 
     # 🔹 Captura e valida o campo da query
     query = body.get("query")

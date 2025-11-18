@@ -37,6 +37,21 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .processing-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e2f0fb;
+            border: 1px solid #b8daff;
+            border-radius: 5px;
+        }
+        .processing-step {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .processing-step.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
     </style>
 </head>
 <body>
@@ -100,7 +115,7 @@
             messageDiv.innerHTML = '';
             messageDiv.className = '';
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Enviando...';
+            submitBtn.textContent = 'Enviando e processando...';
             
             const token = localStorage.getItem('access_token');
             
@@ -129,11 +144,26 @@
                 const result = await response.json();
                 
                 if (response.ok) {
+                    let processingInfo = '';
+                    if (result.processing) {
+                        processingInfo = `
+                            <div class="processing-info">
+                                <strong>Processamento Automático Concluído:</strong>
+                                <div class="processing-step success">Upload do arquivo</div>
+                                <div class="processing-step success">Extração de texto (${result.processing.pages} páginas)</div>
+                                <div class="processing-step success">Geração de embeddings (${result.processing.chunks_processed} chunks)</div>
+                                <div class="processing-step success">Modelo: ${result.processing.model_used}</div>
+                                <div class="processing-step success">Status: PDF pronto para consultas RAG</div>
+                            </div>
+                        `;
+                    }
+                    
                     showMessage(`
-                        <strong>Upload realizado com sucesso!</strong><br>
+                        <strong>Upload e processamento realizados com sucesso!</strong><br>
                         <strong>Nome do arquivo:</strong> ${result.file_name}<br>
                         <strong>Nome de exibição:</strong> ${result.display_name}<br>
                         <strong>URL assinada:</strong> <a href="${result.signed_url}" target="_blank">${result.signed_url}</a>
+                        ${processingInfo}
                     `, 'success');
                     
                     // Reset form

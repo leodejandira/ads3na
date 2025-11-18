@@ -84,4 +84,15 @@ async def serve_funcionarios_page(request: Request):
         context={},
     )
 
+@app.get("/chat", response_class=HTMLResponse)
+async def serve_chat_page(request: Request):
+    """
+    Serve a página do chat para gerentes e usuários.
+    """
+    return templates.TemplateResponse(
+        request=request,
+        name="chat.html",
+        context={},
+    )
+
 app.include_router(auth_router.router, tags=["Autenticação"])
