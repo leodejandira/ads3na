@@ -1,8 +1,9 @@
 import os
 
 from dotenv import load_dotenv
-from supabase import Client, create_client
 from sentence_transformers import SentenceTransformer
+from supabase import Client, create_client
+
 """
 Demonstração de autenticação no Supabase.
 

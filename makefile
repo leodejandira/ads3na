@@ -21,7 +21,7 @@ docker-stop:
 
 
 docker-run: docker-stop
-	docker run -d -p $(PORT):8000 --name $(APP_NAME) $(APP_NAME)
+	docker run -d -p $(PORT):8000 --env-file .env --name $(APP_NAME) $(APP_NAME)
 
 
 
@@ -40,7 +40,7 @@ docker-stop-win:
 
 
 docker-run-win: docker-stop-win
-	docker run -d -p $(PORT):8000 --name $(APP_NAME) $(APP_NAME)
+	docker run -d -p $(PORT):8000 --env-file .env --name $(APP_NAME) $(APP_NAME)
 
 
 format:

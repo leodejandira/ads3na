@@ -1,10 +1,7 @@
-import os
-import uuid
 from typing import List, Optional
 
 from fastapi import HTTPException
 from passlib.hash import bcrypt
-from supabase import create_client
 
 from app.api.schema.registros import Registro, RegistroCreate
 from app.db.database import get_client

@@ -1,10 +1,12 @@
-from fastapi import FastAPI, Request, Depends, HTTPException
+from dotenv import load_dotenv
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.api.routers import auth_router
-from app.api.routers.auth_router import get_current_user
+from app.api.routers import auth_router, embedding_router, pdf_router
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -73,6 +75,7 @@ async def serve_upload_page(request: Request):
         context={},
     )
 
+
 @app.get("/funcionarios", response_class=HTMLResponse)
 async def serve_funcionarios_page(request: Request):
     """
@@ -83,6 +86,7 @@ async def serve_funcionarios_page(request: Request):
         name="funcionarios.html",
         context={},
     )
+
 
 @app.get("/chat", response_class=HTMLResponse)
 async def serve_chat_page(request: Request):
@@ -95,4 +99,7 @@ async def serve_chat_page(request: Request):
         context={},
     )
 
+
 app.include_router(auth_router.router, tags=["Autenticação"])
+app.include_router(pdf_router.router, tags=["PDFs"])
+app.include_router(embedding_router.router, tags=["Embeddings"])

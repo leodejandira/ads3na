@@ -1,17 +1,15 @@
 import os
+import tempfile
 import uuid
+from datetime import datetime
+from typing import Dict, Tuple
+
+import fitz  # PyMuPDF 1.22.5
+import requests  # 2.31.0
 from fastapi import HTTPException
 from supabase import create_client
+
 from app.db.database import get_client
-import tempfile
-import requests # 2.31.0
-import fitz # PyMuPDF 1.22.5
-from datetime import datetime
-from typing import Dict, Tuple, Optional
-import math
-from sentence_transformers import SentenceTransformer
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from app.core.config import embedding_model, EMBEDDING_MODEL_NAME
 
 
 def upload_pdf(
@@ -125,6 +123,7 @@ def upload_pdf(
         "signed_url": signed_url,
     }
 
+
 def list_pdfs(user_id: str = None, bucket_name: str = "pdfs"):
     """
     Lista os PDFs enviados, filtrando opcionalmente por usuário.
@@ -160,7 +159,8 @@ def list_pdfs(user_id: str = None, bucket_name: str = "pdfs"):
     except Exception as e:
         print(f"[ERROR] Erro ao listar PDFs: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao listar PDFs: {str(e)}")
-    
+
+
 def delete_pdf(display_name: str, bucket_name: str = "pdfs"):
     """
     Deleta um PDF do Supabase Storage e remove o registro no banco,
@@ -211,21 +211,24 @@ def delete_pdf(display_name: str, bucket_name: str = "pdfs"):
     except Exception as e:
         print(f"[ERROR] Erro ao deletar PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")
-    
+
 
 def download_pdf_and_extract_text(
-        file_path: str,
-        bucket_name: str = "pdfs",
-        expire_seconds: int = 3600,
-        save_temp: bool = False,
+    file_path: str,
+    bucket_name: str = "pdfs",
+    expire_seconds: int = 3600,
+    save_temp: bool = False,
 ) -> Tuple[str, Dict]:
     """
-    Baixa um PDF do Supabase Storage usando uma URL assinada e extrai o texto usando PyMuPDF.
+    Baixa um PDF do Supabase Storage usando uma
+    URL assinada e extrai o texto usando PyMuPDF.
     parâmetros:
         file_path: caminho do arquivo no bucket.
         bucket_name: nome do bucket (padrão: 'pdfs').
-        expire_seconds: tempo de expiração da URL assinada (padrão: 3600 segundos).
-        save_temp: se True, salva o PDF em um arquivo temporário.
+        expire_seconds: tempo de expiração da
+        URL assinada (padrão: 3600 segundos).
+        save_temp: se True, salva o PDF em um
+        arquivo temporário.
 
     Retorna:
         Texto extraido, metadata
@@ -248,23 +251,23 @@ def download_pdf_and_extract_text(
         if not signed_url:
             raise HTTPException(
                 status_code=500,
-                detail=f"Não foi possivel gerar a URL assinada para {file_path}",
+                detail="Não foi possivel gerar a " f"URL assinada para {file_path}",
             )
-        
-        print(f"[DEBUG] URL assinada gerada com sucesso.")
+
+        print("[DEBUG] URL assinada gerada com sucesso.")
     except Exception as e:
         print(f"[ERROR] Falha ao gerar signed URL: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao gerar URL assinada: {str(e)}",
         )
-    
+
     temp_file = tempfile.NamedTemporaryFile(delete=not save_temp, suffix=".pdf")
     temp_path = temp_file.name
     total_bytes = 0
 
     try:
-        print(f"[DEBUG] Baixando o PDF da URL assinada...")
+        print("[DEBUG] Baixando o PDF da URL assinada...")
         with requests.get(signed_url, stream=True, timeout=60) as r:
             r.raise_for_status()
             for chunk in r.iter_content(chunk_size=8192):
@@ -275,24 +278,21 @@ def download_pdf_and_extract_text(
         print(f"[DEBUG] Download concluido ({total_bytes} bytes).")
     except Exception as e:
         print(f"[ERROR] Falha ao baixar PDF: {e}")
-        
+
         try:
             if not save_temp and os.path.exists(temp_path):
                 os.remove(temp_path)
         except OSError:
             pass
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao baixar o PDF: {str(e)}"
-        )
-    
+        raise HTTPException(status_code=500, detail=f"Erro ao baixar o PDF: {str(e)}")
+
     try:
-        print(f"[DEBUG] Iniciando extração do texto com PyMuPDF...")
+        print("[DEBUG] Iniciando extração do texto com PyMuPDF...")
         with fitz.open(temp_path) as doc:
             pages = doc.page_count
             text_parts = []
             for page in doc:
-                page_text = page.get_text("text").replace("\r","").strip()
+                page_text = page.get_text("text").replace("\r", "").strip()
                 if page_text:
                     text_parts.append(page_text)
             full_text = "\n\n".join(text_parts)
@@ -300,17 +300,16 @@ def download_pdf_and_extract_text(
     except Exception as e:
         print(f"[ERROR] Falha ao extrair texto do PDF: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao extrair texto do PDF: {str(e)}"
+            status_code=500, detail=f"Erro ao extrair texto do PDF: {str(e)}"
         )
-    
+
     finally:
         if not save_temp:
             try:
                 os.remove(temp_path)
             except OSError:
                 pass
-    
+
     metadata = {
         "pages": pages,
         "bytes": total_bytes,
@@ -321,93 +320,3 @@ def download_pdf_and_extract_text(
         metadata["local_path"] = temp_path
 
     return full_text, metadata
-                
-
-def chunk_text(text: str, max_tokens: int = 300) -> list:
-    """
-    Divide o texto em pedaços menores (chunks) para geração de embeddings..
-    """
-    words = text.split()
-    chunks = []
-    for i in range(0, len(words), max_tokens):
-        chunk = " ".join(words[i:i + max_tokens])
-        chunks.append(chunk)
-
-    return chunks
-
-
-def generate_embedding_for_pdf(file_name: str):
-    """
-    Gera embeddings otimizados para um PDF.
-    Agora:
-    - Usa texto salvo no banco (não baixa PDF)
-    - Reutiliza o modelo global
-    - Salva vetores com pgvector
-    """
-    print(f"[DEBUG] Iniciando geração de embeddings para: {file_name}")
-
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_KEY = os.getenv("SUPABASE_KEY_ROLE")
-    supabase_admin = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-    # 1. Busca o PDF no banco
-    record = (
-        supabase_admin.table("pdf_uploads")
-        .select("id, full_text, status")
-        .eq("file_name", file_name)
-        .single()
-        .execute()
-    )
-
-    if not record.data:
-        raise HTTPException(status_code=404, detail="PDF não encontrado.")
-
-    pdf_data = record.data
-
-    # 2. Pega o texto , espero que não de erro
-    if pdf_data.get("full_text"):
-        text = pdf_data["full_text"]
-        print("[DEBUG] Texto carregado do banco.")
-    else:
-        raise HTTPException(status_code=400, detail="Texto não encontrado no banco.")
-
-    # 3. Divide em chunks
-    
-    splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
-    chunks = splitter.split_text(text)
-    print(f"[DEBUG] Texto dividido em {len(chunks)} chunks.")
-
-    # 4. Gera embeddings (reutiliza o modelo global)
-    try:
-        embeddings = embedding_model.encode(chunks, show_progress_bar=True)
-        print(f"[DEBUG] {len(embeddings)} embeddings gerados com sucesso.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar embeddings: {e}")
-
-    # 5. Insere vetores no banco (pgvector)
-    rows = [
-        {
-            "pdf_id": pdf_data["id"],
-            "chunk_index": i,
-            "chunk_text": chunk,
-            "embedding": emb.tolist(),
-            "embedding_model_used": EMBEDDING_MODEL_NAME,
-            "created_at": datetime.utcnow().isoformat(),
-        }
-        for i, (chunk, emb) in enumerate(zip(chunks, embeddings))
-    ]
-
-    supabase_admin.table("pdf_vectors").insert(rows).execute()
-    print(f"[DEBUG] {len(rows)} vetores inseridos no banco.")
-
-    # 6. Atualiza status
-    supabase_admin.table("pdf_uploads").update({
-        "status": "vetorizado",
-        "processed_at": datetime.utcnow().isoformat()
-    }).eq("id", pdf_data["id"]).execute()
-
-    return {
-        "message": f"Embeddings gerados com sucesso para '{file_name}'.",
-        "chunks": len(chunks),
-        "model": EMBEDDING_MODEL_NAME
-    }
