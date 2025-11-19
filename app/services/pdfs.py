@@ -364,7 +364,7 @@ def generate_embedding_for_pdf(file_name: str):
 
     pdf_data = record.data
 
-    # 2. Pega o texto
+    # 2. Pega o texto , espero que não de erro
     if pdf_data.get("full_text"):
         text = pdf_data["full_text"]
         print("[DEBUG] Texto carregado do banco.")
