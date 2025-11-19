@@ -1,6 +1,10 @@
 APP_NAME=minha-api
 PORT=8000
+<<<<<<< HEAD
 
+=======
+SHELL := cmd.exe
+>>>>>>> 57810807baa72815a6446bddd8cafcab8d7bcac8
 
 
 # Pipeline para homologação

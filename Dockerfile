@@ -15,7 +15,12 @@ ENV SECRET_KEY="sua_chave_super_secreta"
 ENV ALGORITHM="HS256"
 ENV SUPABASE_URL="https://hdgcquzcfbbwqufznatb.supabase.co"
 ENV SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZ2NxdXpjZmJid3F1ZnpuYXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg2MjY2NDMsImV4cCI6MjA3NDIwMjY0M30.7r9RNPhoGT4UJdolJFsDmaftbApKTg61DKgOcchkRWY"
+<<<<<<< HEAD
 ENV SUPABASE_KEY_ROLE="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkZ2NxdXpjZmJid3F1ZnpuYXRiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODYyNjY0MywiZXhwIjoyMDc0MjAyNjQzfQ.d9qv3hbp1gWUD9HZGTQaQsLnVE8AZjECoQ-to9abnsM"
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
+=======
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+>>>>>>> 57810807baa72815a6446bddd8cafcab8d7bcac8
