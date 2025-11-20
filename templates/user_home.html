@@ -1,53 +1,41 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usuário</title>
+    <title>Usuário - MindDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/user_home.css') }}">
 </head>
 <body>
-    <div id="loadingMessage">Verificando autenticação...</div>
+    <div id="loading" class="loading">Verificando autenticação...</div>
 
-    <div id="protectedContent" style="display:none; padding: 20px;">
-        <h1>Peão</h1>
-        <p>Trabalha escravo.</p>
-        <button onclick="logout()">Sair / Logout</button>
+    <div id="content" class="container" style="display:none;">
+        <div class="content">
+            <div class="header">
+                <h1 class="title">USUÁRIO</h1>
+                <p class="subtitle">Bem-vindo ao MindDesk</p>
+            </div>
+
+            <div class="button-group">
+                <button class="btn" onclick="goToChat()">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Chat
+                </button>
+
+                <button class="btn" onclick="logout()">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Sair
+                </button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        const token = localStorage.getItem('access_token');
-        const loading = document.getElementById('loadingMessage');
-        const content = document.getElementById('protectedContent');
-        const apiRoute = '/rota-usuario'; 
-
-        if (!token) {
-            window.location.href = '/login';
-        } else {
-            fetch(apiRoute, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            .then(response => {
-                loading.style.display = 'none';
-                if (response.ok) {
-                    content.style.display = 'block';
-                } else {
-                    localStorage.removeItem('access_token');
-                    window.location.href = '/login';
-                }
-            })
-            .catch(error => {
-                console.error('Erro de rede:', error);
-                window.location.href = '/login';
-            });
-        }
-        
-        function logout() {
-            localStorage.removeItem('access_token');
-            window.location.href = '/'; 
-        }
-    </script>
+    <script src="{{ url_for('static', path='js/user_home.js') }}"></script>
 </body>
 </html>

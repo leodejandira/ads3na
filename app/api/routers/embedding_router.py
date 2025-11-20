@@ -81,10 +81,10 @@ async def query_pdf_route(
     - Chama o modelo GPT configurado (OpenAI)
     """
 
-    # 🔒 Validação de permissão
-    if user.get("role") != "gerente":
+    # 🔒 Validação de permissão - AGORA PERMITE GERENTES E USUÁRIOS
+    if user.get("role") not in ["gerente", "usuario"]:
         raise HTTPException(
-            status_code=403, detail="Somente gerentes podem consultar PDFs."
+            status_code=403, detail="Somente usuários autenticados podem consultar PDFs."
         )
 
     # 🔹 Captura e valida o campo da query

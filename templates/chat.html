@@ -1,73 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Chat Teste</title>
-    <style>
-        body { font-family: Arial; max-width: 800px; margin: 20px auto; padding: 20px; }
-        #chat { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; }
-        #messages { height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; }
-        .message { margin: 5px 0; padding: 8px; border-radius: 5px; }
-        .user { background: #e3f2fd; text-align: right; }
-        .bot { background: #f5f5f5; }
-        input, button { padding: 10px; margin: 5px; }
-        input { width: 70%; }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MindDesk - Chat Inteligente</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/minddesk.css') }}">
 </head>
+
 <body>
-    <h1>💬 Chat Teste</h1>
-    
-    <div id="chat">
-        <div id="messages"></div>
-        <input type="text" id="question" placeholder="Digite sua pergunta..." />
-        <button onclick="sendQuestion()">Enviar</button>
+    <div id="authCheck" class="loading">Verificando autenticação...</div>
+
+    <div class="app-container" style="display:none;">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-header">
+                    <h1 class="sidebar-title">MindDesk</h1>
+                    <button class="menu-btn" id="closeSidebar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <button class="btn-new-chat" onclick="clearChat()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Nova Conversa
+                </button>
+
+                <div class="chat-history" id="chatHistory">
+                    <!-- Histórico será carregado aqui -->
+                </div>
+
+                <button class="btn-settings" id="backButton">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m8.66-15L17 7.66M7 17l-3.66 3.66M23 12h-6m-6 0H1m20.66 8.66L17 16.34M7 7 3.34 3.34">
+                        </path>
+                    </svg>
+                    <span id="backButtonText">Voltar</span>
+                </button>
+            </div>
+        </aside>
+        <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+        <!-- Botão para abrir sidebar -->
+        <button class="menu-btn-fixed" id="openSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+
+        <!-- Main content -->
+        <main class="main-content">
+            <div class="chat-container" id="chatContainer">
+                <!-- Tela inicial -->
+                <div class="empty-state" id="emptyState">
+                    <h1 class="welcome-title">Olá! </h1>
+                    <p class="welcome-text">
+                        Como posso ajudá-lo hoje? Faça uma pergunta sobre os processos de Onboarding.
+                    </p>
+                </div>
+
+                <!-- Mensagens -->
+                <div class="messages-container" id="messagesContainer" style="display: none;"></div>
+            </div>
+
+            <!-- Input -->
+            <div class="input-area">
+                <form class="input-form" id="chatForm">
+                    <div class="input-wrapper">
+                        <textarea class="chat-input" id="chatInput" placeholder="Digite sua pergunta sobre os PDFs..." rows="1"></textarea>
+                        <div class="input-actions">
+                            <button type="submit" class="btn-send" id="sendBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
     </div>
 
-    <script>
-        async function sendQuestion() {
-            const question = document.getElementById('question').value;
-            if (!question) return;
-
-            // Adiciona pergunta do usuário
-            addMessage(question, 'user');
-            document.getElementById('question').value = '';
-
-            try {
-                const token = localStorage.getItem('token'); // Assume que o token está salvo
-                
-                const response = await fetch('/pdfs/query', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ query: question })
-                });
-
-                const data = await response.json();
-                
-                if (response.ok) {
-                    addMessage(data.response, 'bot');
-                } else {
-                    addMessage(`Erro: ${data.detail}`, 'bot');
-                }
-            } catch (error) {
-                addMessage('Erro de conexão', 'bot');
-            }
-        }
-
-        function addMessage(text, type) {
-            const messages = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            messageDiv.textContent = text;
-            messages.appendChild(messageDiv);
-            messages.scrollTop = messages.scrollHeight;
-        }
-
-        // Enter para enviar
-        document.getElementById('question').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendQuestion();
-        });
-    </script>
+    <script src="{{ url_for('static', path='js/minddesk.js') }}"></script>
 </body>
 </html>

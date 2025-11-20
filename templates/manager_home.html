@@ -1,68 +1,62 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerente</title>
-    <style>
-        body { margin: 20px; font-family: Arial; }
-        .loading { text-align: center; padding: 20px; }
-        .content { text-align: center; }
-        button { 
-            display: block; 
-            margin: 10px auto; 
-            padding: 10px 20px; 
-            width: 200px;
-            cursor: pointer;
-        }
-    </style>
+    <title>GERENTE - Sistema de Gestão</title>
+    <meta name="description" content="Sistema de gestão empresarial para gerentes - Upload de PDF, gerenciamento de funcionários e chat integrado">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/manager_home.css') }}">
 </head>
+
 <body>
     <div id="loading" class="loading">Verificando autenticação...</div>
 
-    <div id="content" class="content" style="display:none;">
-        <h1>GERENTE</h1>
-        <p>sou patrão não funcionário meu estilo de vida é foda...</p>
-        
-        <button onclick="window.location.href='/upload'">Upload de PDF</button>
-        <button onclick="window.location.href='/funcionarios'">Gerenciar Funcionários</button>
-        <button onclick="window.location.href='/chat'">Chat</button> 
-        <button onclick="logout()">Sair</button>
+    <div id="content" class="container" style="display:none;">
+        <div class="content">
+            <div class="header">
+                <h1 class="title">GERENTE</h1>
+                <p class="subtitle">Bem vindo ao MindDesk</p>
+            </div>
+
+            <div class="button-group">
+                <button class="btn" onclick="goToUpload()">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Upload de PDF
+                </button>
+
+                <button class="btn" onclick="goToFuncionarios()">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Gerenciar Funcionários
+                </button>
+
+                <button class="btn" onclick="goToChat()">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    Chat
+                </button>
+
+                <button class="btn" onclick="logout()">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Sair
+                </button>
+            </div>
+        </div>
     </div>
 
-    <script>
-        const token = localStorage.getItem('access_token');
-        const loading = document.getElementById('loading');
-        const content = document.getElementById('content');
-
-        if (!token) {
-            window.location.href = '/login';
-        } else {
-            fetch('/rota-gerente', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            .then(response => {
-                loading.style.display = 'none';
-                if (response.ok) {
-                    content.style.display = 'block';
-                } else {
-                    localStorage.removeItem('access_token');
-                    window.location.href = '/login';
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                window.location.href = '/login';
-            });
-        }
-        
-        function logout() {
-            localStorage.removeItem('access_token');
-            window.location.href = '/';
-        }
-    </script>
+    <script src="{{ url_for('static', path='js/manager_home.js') }}"></script>
 </body>
 </html>

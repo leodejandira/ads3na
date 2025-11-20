@@ -3,13 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindDesk</title>
+    <title>MindDesk - Sistema Inteligente</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/home.css') }}">
 </head>
 <body>
-    <h1>Home</h1>
-    <p>Aqui ficará o home sobre o projeto.</p>
-    <form action="/login" method="get">
-        <button type="submit">Fazer Login</button>
-    </form>
+    <div class="container">
+        <div class="content">
+            <!-- Logo Area -->
+            <div class="logo-area">
+                <img src="{{ url_for('static', path='images/logo.png') }}" alt="MindDesk" class="logo">
+                <h1 class="title">MindDesk</h1>
+                <p class="subtitle">Sistema Inteligente de Gestão para Onboarding</p>
+            </div>
+
+            <!-- Description -->
+            <div class="description">
+                <p>Bem-vindo ao MindDesk, sua plataforma inteligente para gestão de documentos para Onboarding colaboração empresarial.</p>
+            </div>
+
+            <!-- Login Button -->
+            <div class="action-area">
+                <button class="login-btn" onclick="goToLogin()">
+                    <i class='bx bx-log-in'></i>
+                    Fazer Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+    </script>
 </body>
 </html>

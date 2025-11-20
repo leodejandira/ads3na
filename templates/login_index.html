@@ -1,105 +1,58 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link
-href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css'
-rel='stylesheet'> 
-    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', path='css/login.css') }}">
     <title>MindDesk Login</title>
 </head>
+
 <body>
     <main class="container">
         <form id="loginForm">
-            <h1>Login MindDesk</h1>
-            <div class="input-box">
-                <input placeholder="E-mail" type="email" name="username" required>
-                <i class="bx bxs-user"></i>
+            <div class="logo-area">
+                <img src="{{ url_for('static', path='images/logo.png') }}" alt="MindDesk" class="logo">
+                <h1 class="title">Login</h1>
+                <p class="subtitle">Acesse sua conta para continuar usando o MindDesk</p>
             </div>
-            <div class="input-box">
-                <input placeholder="Senha" type="password" name="password" required>
-                <i class="bx bxs-lock-alt"></i>
+
+            <div class="input-group">
+                <label for="emailInput">E-mail</label>
+                <div class="input-box">
+                    <input id="emailInput" placeholder="Digite seu e-mail" type="email" name="username" required>
+                    <i class="bx bxs-user"></i>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="passwordInput">Senha</label>
+                <div class="input-box">
+                    <input id="passwordInput" placeholder="Digite sua senha" type="password" name="password" required>
+                    <i class="bx bxs-lock-alt"></i>
+                </div>
             </div>
 
             <div class="esqueceu-senha">
                 <label>
                     <input type="checkbox">
-                    Lembrar senha
+                    Lembrar de mim
                 </label>
                 <a href="#">Esqueci a senha</a>
             </div>
-            
-            <button type="submit" class="Login">Login</button>
-            
+
+            <button type="submit" class="Login">Entrar</button>
+
+            <p id="loginError" class="error-message" style="display: none;">
+                E-mail ou senha inválidos
+            </p>
+
             <div class="registro-link">
                 <p> Não tem conta? <a href="/register">Cadastre-se</a></p>
             </div>
         </form>
     </main>
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(event) {
-            event.preventDefault(); // Evita o envio padrão do formulário
-
-            const form = event.target;
-            const formData = new URLSearchParams(new FormData(form)).toString();
-            
-            // Adiciona o campo obrigatório 'grant_type=password' ao corpo da requisição
-            const body = 'grant_type=password&' + formData;
-
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: body
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    // 1. Decodificar o JWT para obter a role
-                    const payload = parseJwt(data.access_token);
-                    const role = payload.role;
-                    
-                    // 2. Armazenar o token (muito importante para as rotas protegidas)
-                    localStorage.setItem('access_token', data.access_token);
-                    
-                    // 3. Redirecionar com base na role
-                    if (role === 'gerente') {
-                        window.location.href = '/gerente'; 
-                    } else if (role === 'usuario') {
-                        window.location.href = '/usuario';
-                    } else {
-                        alert('Login bem-sucedido, mas função de usuário desconhecida.');
-                    }
-                } else {
-                    const error = await response.json();
-                    alert('Erro no Login: ' + (error.detail || response.statusText));
-                }
-            } catch (error) {
-                console.error('Erro de rede:', error);
-                alert('Ocorreu um erro ao tentar conectar com a API.');
-            }
-        });
-
-        // Função auxiliar para decodificar o payload do JWT (simples e sem validação)
-        function parseJwt (token) {
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                return JSON.parse(jsonPayload);
-            } catch (e) {
-                console.error("Erro ao decodificar JWT:", e);
-                return {};
-            }
-        };
-
-    </script>
+    <script src="{{ url_for('static', path='js/login.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,550 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef1f5 100%);
+    min-height: 100vh;
+    padding: 24px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+}
+
+/* Sections */
+.register-section,
+.employees-section {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+/* Form */
+.register-form {
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-input,
+.form-select {
+    height: 48px;
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: #1e293b;
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.form-input::placeholder {
+    color: #94a3b8;
+}
+
+/* Buttons */
+.btn {
+    height: 48px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 500;
+    font-family: inherit;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    width: 100%;
+    background: linear-gradient(to right, #5b9dd9, #8b7bd8);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(to right, #4a8bc8, #7a6ac7);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-delete {
+    background-color: #ffffff;
+    color: #1e293b;
+    border: 2px solid #e2e8f0;
+    padding: 8px 16px;
+    height: auto;
+    font-size: 0.875rem;
+}
+
+.btn-delete:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    background-color: #fef2f2;
+    color: #dc2626;
+}
+
+.btn-back {
+    display: block;
+    margin: 32px auto 0;
+    background-color: #f8fafc;
+    color: #1e293b;
+    border: 2px solid rgba(139, 92, 246, 0.2);
+    min-width: 200px;
+}
+
+.btn-back:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    background-color: #f8fafc;
+    transform: scale(1.02);
+}
+
+/* Table */
+.table-container {
+    overflow-x: auto;
+    margin-top: 24px;
+}
+
+.employees-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #ffffff;
+}
+
+.employees-table thead {
+    background-color: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.employees-table th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.employees-table td {
+    padding: 16px;
+    color: #1e293b;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.employees-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.employees-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    body {
+        padding: 16px;
+    }
+    
+    .register-section,
+    .employees-section {
+        padding: 24px 16px;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .table-container {
+        margin-left: -16px;
+        margin-right: -16px;
+    }
+    
+    .employees-table {
+        font-size: 0.875rem;
+    }
+    
+    .employees-table th,
+    .employees-table td {
+        padding: 12px 8px;
+    }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    
+    .register-section,
+    .employees-section {
+        background-color: #1e293b;
+    }
+    
+    .section-title {
+        color: #f8fafc;
+    }
+    
+    .form-input,
+    .form-select {
+        background-color: #334155;
+        color: #f8fafc;
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+    
+    .form-input::placeholder {
+        color: #94a3b8;
+    }
+    
+    .employees-table {
+        background-color: #1e293b;
+    }
+    
+    .employees-table thead {
+        background-color: #334155;
+        border-bottom-color: rgba(139, 92, 246, 0.3);
+    }
+    
+    .employees-table th {
+        color: #cbd5e1;
+    }
+    
+    .employees-table td {
+        color: #f8fafc;
+        border-bottom-color: #334155;
+    }
+    
+    .employees-table tbody tr:hover {
+        background-color: #334155;
+    }
+    
+    .btn-delete,
+    .btn-back {
+        background-color: #334155;
+        color: #f8fafc;
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+    
+    .btn-delete:hover {
+        background-color: #7f1d1d;
+        border-color: #dc2626;
+        color: #fef2f2;
+    }
+    
+    .btn-back:hover {
+        background-color: #475569;
+        border-color: rgba(139, 92, 246, 0.5);
+    }
+}
+
+
+/* MODAL OVERLAY */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(30, 41, 59, 0.65);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+    z-index: 1000;
+}
+
+/* MODAL CONTENT */
+.modal-content {
+    background-color: #ffffff;
+    padding: 32px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    animation: fadeIn 0.25s ease;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+.modal-title {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #1e293b;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Animação */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    .modal-content {
+        background-color: #1e293b;
+    }
+    .modal-title {
+        color: #f8fafc;
+    }
+}
+.button-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Força ambos ficarem IGUAIS */
+.button-row .btn {
+    width: 240px;
+    height: 50px;
+    margin: 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+}
+
+/* Remove estilos quebrados do botão "Voltar" */
+.button-row .btn-back {
+    min-width: unset !important;
+    background-color: #1e293b;
+    border: 2px solid rgba(139, 92, 246, 0.4);
+    color: 1e293b;
+}
+
+.button-row .btn-back:hover {
+    background-color: #273349;
+    border-color: rgba(139, 92, 246, 0.6);
+    transform: translateY(-2px);
+}
+
+/* RESPONSIVIDADE PARA TABLETS (ATÉ 1024px) */
+@media (max-width: 1024px) {
+
+    body {
+        padding: 16px;
+    }
+
+    .container {
+        max-width: 100%;
+    }
+
+    .employees-section {
+        padding: 24px;
+    }
+
+    .section-title {
+        font-size: 1.6rem;
+    }
+
+    /* Botões mais compactos */
+    .button-row .btn {
+        width: 200px;
+        height: 46px;
+        font-size: 0.95rem;
+    }
+}
+
+/* RESPONSIVIDADE PARA MOBILE (ATÉ 768px)*/
+@media (max-width: 768px) {
+
+    /* Layout */
+    body {
+        padding: 12px;
+    }
+
+    .content {
+        gap: 32px;
+    }
+
+    /* Botões empilham */
+    .button-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .button-row .btn {
+        width: 100%;
+        max-width: 100%;
+        height: 48px;
+    }
+
+    /* Sessão de funcionários */
+    .employees-section {
+        padding: 20px 12px;
+        border-radius: 12px;
+    }
+
+    .section-title {
+        font-size: 1.4rem;
+        margin-bottom: 18px;
+    }
+
+    /* Tabela scroll horizontal suave */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Texto menor */
+    .employees-table {
+        font-size: 0.82rem;
+    }
+
+    .employees-table th,
+    .employees-table td {
+        padding: 10px 6px;
+    }
+}
+
+/* MODAL RESPONSIVO */
+@media (max-width: 600px) {
+
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
+        padding: 24px;
+        border-radius: 14px;
+    }
+
+    .modal-title {
+        font-size: 1.3rem;
+    }
+
+    .modal-form {
+        gap: 14px;
+    }
+
+    .btn-primary {
+        height: 46px;
+    }
+    /* Loading styles */
+    .loading {
+        text-align: center;
+        padding: 40px;
+        font-family: inherit;
+        font-size: 1.125rem;
+        color: #6b7280;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f5f7fa 0%, #eef1f5 100%);
+    }
+
+    /* Message styles */
+    .message {
+        margin: 20px auto;
+        padding: 16px;
+        max-width: 500px;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 500;
+        display: none;
+    }
+
+    .message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        display: block;
+    }
+
+    .message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        display: block;
+    }
+
+    /* Dark mode para loading e messages */
+    @media (prefers-color-scheme: dark) {
+        .loading {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #94a3b8;
+        }
+        
+        .message.success {
+            background-color: #065f46;
+            color: #d1fae5;
+            border-color: #047857;
+        }
+        
+        .message.error {
+            background-color: #7f1d1d;
+            color: #fecaca;
+            border-color: #dc2626;
+        }
+    }
+
+    /* Estado de loading para botões */
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    .btn:disabled:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    #btn-close-modal {
+        width: 100%;
+    }
+}
+
+/* CORREÇÃO DO BOTÃO "VOLTAR" */
+.button-row .btn-back {
+    color: #ffffff !important; /* antes estava "1e293b" -> erro */
+}
