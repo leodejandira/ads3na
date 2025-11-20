@@ -1,253 +1,216 @@
-# Nome do Projeto (corrigir depois)
+## 1. Sobre o Projeto
 
-*(Recomendação: Adicione aqui uma ou duas frases que descrevem o objetivo principal do seu projeto. O que ele faz? Qual problema ele resolve?)*
+## 2. Configuração do Ambiente de Desenvolvimento
 
------
 
-## 1\. Sobre o Projeto (corrigir depois)
+Este guia irá ajudá-lo a configurar corretamente seu ambiente de desenvolvimento para executar o projeto localmente utilizando Docker.
 
-*(Recomendação: Detalhe um pouco mais sobre o projeto. Fale sobre as principais funcionalidades, a quem se destina e as tecnologias utilizadas. Ex: "Este projeto é uma API RESTful para gerenciar X, Y e Z, construída com Python, FastAPI e conectada a um banco de dados PostgreSQL via Supabase.")*
+---
 
------
+### 2.1 Requisitos
 
-## 2\. Pré-requisitos
+Certifique-se de ter os seguintes softwares instalados:
 
-Antes de começar, garanta que você tenha os seguintes softwares instalados e configurados em sua máquina:
+- [Git](https://git-scm.com/downloads)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- Windows Subsystem for Linux (WSL) **atualizado**
+- [Chocolatey](https://chocolatey.org/install) (somente no Windows)
+- **Make** (instalado via Chocolatey no Windows, ou via gerenciadores de pacotes no Linux/macOS)
 
-  - **Git:** Essencial para o controle de versão.
-  - **Docker Desktop:** Para a criação e gerenciamento dos contêineres da aplicação.
-  - **Windows Subsystem for Linux (WSL) 2:** **(Usuários Windows)** É um requisito para o Docker Desktop funcionar corretamente.
-  - **Make:** Para simplificar a execução de comandos Docker e de pipeline.
-      - **Windows:** A instalação pode ser feita via [Chocolatey](https://chocolatey.org/install).
-      - **Linux/macOS:** Geralmente instalado via gerenciadores de pacotes como `apt` ou `brew`.
+---
 
------
+### 2.2 Instalação do Git
 
-## 3\. 🚀 Configuração do Ambiente de Desenvolvimento
+1. Acesse o site: [https://git-scm.com/downloads](https://git-scm.com/downloads)
+2. Baixe e instale o Git para o seu sistema operacional.
+3. Durante a instalação no **Windows**, selecione a opção para **adicionar o Git ao PATH do sistema**.
+4. Após a instalação, confirme que está tudo certo:
+   ```bash
+   git --version
+   ```
+   
 
-Siga os passos abaixo para clonar e configurar o projeto em seu ambiente local.
+### 2.3 Instalação do Docker Desktop
 
-### 3.1. Clone o Repositório
+1. Acesse: [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)  
+2. Baixe e instale o Docker Desktop para o seu sistema.  
+3. Reinicie o computador se for solicitado.  
 
-Navegue até o diretório onde deseja salvar o projeto e execute o comando abaixo. Substitua a URL pelo link do seu repositório.
+### 2.4 Atualização do WSL (Windows Subsystem for Linux)
 
-```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd seu-repositorio
-```
+O Docker precisa que o WSL esteja atualizado.  
 
-### 3.2. Instalação das Ferramentas
+1. Abra o **PowerShell** como Administrador.  
+2. Execute o comando:  
 
-Caso não tenha alguma das ferramentas listadas nos pré-requisitos, siga os guias abaixo:
-
-\<details\>
-\<summary\>\<strong\>Clique para ver as instruções de instalação\</strong\>\</summary\>
-
-#### Git
-
-1.  Acesse [git-scm.com/downloads](https://git-scm.com/downloads) e instale a versão para o seu sistema.
-2.  **No Windows**, marque a opção para adicionar o Git ao `PATH` do sistema durante a instalação.
-3.  Verifique a instalação:
-    ```bash
-    git --version
-    ```
-
-#### Docker Desktop
-
-1.  Acesse [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop) e instale a versão para o seu sistema.
-2.  Reinicie o computador se for solicitado.
-
-#### WSL 2 (Apenas Windows)
-
-O Docker Desktop para Windows precisa do WSL 2 atualizado.
-
-1.  Abra o **PowerShell** ou **Terminal** como **Administrador**.
-2.  Execute o comando:
     ```bash
     wsl --update
     ```
+    
 
-#### Make
+### 2.5 Instalação do Chocolatey (Windows)
 
-  - **No Windows (via Chocolatey)**:
+1. Abra o **PowerShell** como Administrador.  
+2. Execute o comando abaixo para instalar o Chocolatey:  
 
-    1.  Primeiro, instale o [Chocolatey](https://chocolatey.org/install).
-    2.  Depois, em um terminal como **Administrador**, execute:
-        ```powershell
-        choco install make -y
-        ```
+    ```powershell
+    Set-ExecutionPolicy Bypass -Scope Process -Force; `
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
+    iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+    ```
 
-  - **No Linux (Debian/Ubuntu)**:
+### 2.6 Instalação do Make
 
-    ```bash
+#### 2.6.1 No Windows (via Chocolatey)
+
+Após instalar o Chocolatey, execute no PowerShell como Administrador:  
+
+    ```
+    choco install make -y
+    ```
+
+Verifique:
+
+    ```
+    wsl --update
+    ```
+
+#### 2.6.2 Em sistemas Unix (Linux/macOS)
+
+No Ubuntu/Debian:
+
+    ```
     sudo apt update && sudo apt install build-essential -y
     ```
 
-  - **No macOS (via Homebrew)**:
+No macOS (usando Homebrew):
 
-    ```bash
+    ```
     brew install make
     ```
 
-\</details\>
+### 2.7 Clonando o Projeto
 
-3.3. Ambiente Virtual (.venv)
-Para isolar as dependências do projeto, utilize um ambiente virtual.
+1. Acesse o repositório no GitHub.  
+2. Clique no botão verde **"Code"** e copie o link HTTPS (ex: `https://github.com/seu-usuario/seu-repositorio.git`).  
+3. No terminal, navegue até o diretório onde deseja clonar e execute:  
 
-Crie e ative o ambiente:
-
-# Crie o ambiente
- ```bash
-    python -m venv .venv
+```bash
+git clone https://github.com/seu-usuario/seu-repositorio.git
 ```
 
-# Ative no Windows (PowerShell)
- ```bash
-.\.venv\Scripts\activate
+4. Acesse a pasta do projeto:
+
+```bash
+cd seu-repositorio
 ```
 
-# Ative no Linux/macOS
- ```bash
-source .venv/bin/activate
-Instale as dependências:
-Com o ambiente ativo (você verá (.venv) no terminal), execute:
+### 2.8 Executando o Projeto Localmente
+
+1. Verificando a Branch Atual
+
+```bash
+git branch
 ```
 
- ```bash
-pip install -r requirements.txt
-Para desativar o ambiente, use o comando deactivate.
+Se não estiver na branch correta, mude com:
+
+```bash
+git checkout gustavodev
 ```
 
------
+2. Atualizando a Branch
 
-## 4\. Executando o Projeto com Docker
+Atualize com as alterações do repositório remoto:
 
-Com o Docker Desktop em execução, use os seguintes comandos `make` na raiz do projeto para gerenciar a aplicação.
+```bash
+git pull origin master
+```
 
-  - **Construir (ou reconstruir) a imagem Docker:**
-    *Este comando lê o `Dockerfile` e cria a imagem da sua aplicação.*
+O mesmo para uma segunda branch, chamada homolog (criar uma branch local chamada homolog e sincronizar com a origem):
 
-    ```bash
-    make build
-    ```
 
-  - **Iniciar o container da aplicação:**
-    *Este comando sobe o container em modo "detached" (-d), ou seja, rodando em segundo plano.*
+```bash
+git pull origin homolog
+```
 
-    ```bash
-    make run
-    ```
+3. Comandos Docker via Make
 
-    > Após a execução, a aplicação estará acessível em: **http://localhost:8000** (ou a porta que você configurou no `.env`).
+Com o Docker Desktop rodando, utilize os comandos abaixo na raiz do projeto:
 
-  - **Parar o container:**
+- Criar/Recriar a imagem:
 
-    ```bash
-    make stop
-    ```
+```bash
+make docker-build
+```
 
-  - **Visualizar os logs do container (útil para depuração):**
+- Rodar o container:
 
-    ```bash
-    make logs
-    ```
+```bash
+make docker-run
+```
 
-  - **Acessar o terminal do container (para comandos de shell):**
+> A aplicação estará acessível em: http://localhost:8000
 
-    ```bash
-    make shell
-    ```
+- Parar o container:
 
------
+```bash
+make docker-stop
+```
 
-## 5\. Fluxo de Trabalho com Git
+### 2.9 Subindo Alterações para o Repositório
 
-Siga este fluxo para garantir que suas alterações sejam enviadas corretamente ao repositório.
+1. Verificar o status
 
-### 5.1. Sincronizando seu Ambiente
+```bash
+Git status
+```
 
-Antes de começar a trabalhar, garanta que sua branch local esteja atualizada com a versão mais recente do repositório remoto.
+2. Adicionar arquivos:
 
-1.  Verifique em qual branch você está:
-    ```bash
-    git branch
-    ```
-2.  Se não estiver na sua branch de desenvolvimento (ex: `gustavodev`), mude para ela:
-    ```bash
-    git checkout gustavodev
-    ```
-3.  Atualize sua branch com as alterações da `master` (ou `main`):
-    ```bash
-    git pull origin master
-    ```
+- Para adicionar tudo:
 
-### 5.2. Enviando Suas Alterações
+```bash
+Git add .
+```
 
-Após concluir uma tarefa, siga os passos abaixo para enviar seu código.
+- Para adicionar arquivos específicos:
 
-1.  Verifique os arquivos que você modificou:
+```bash
+git add caminho/do/arquivo
+```
 
-    ```bash
-    git status
-    ```
+3. Verificar novamente o status:
 
-2.  Adicione os arquivos desejados ao "stage":
+```bash
+git status
+```
 
-    ```bash
-    # Para adicionar todos os arquivos modificados
-    git add .
+4. Fazer o commit:
 
-    # Para adicionar um arquivo específico
-    git add app/caminho/do/arquivo.py
-    ```
+```bash
+git commit -m "Descreva aqui o que foi alterado"
+```
 
-3.  Faça o commit das suas alterações com uma mensagem descritiva:
+5. Enviar para sua branch:
 
-    ```bash
-    git commit -m "feat: Adiciona funcionalidade de login"
-    ```
+```bash
+git push origin gustavodev
+```
 
-    > **Dica:** Use prefixos como `feat:`, `fix:`, `docs:`, `chore:` para organizar seus commits (Conventional Commits).
+> Para alterações funcionais, realize o commit para a sua branch, bem como para a branch de homolog.
 
-4.  Envie o commit para o repositório remoto na sua branch:
+> As cargas de homolog subirão para a branch mastes ao final de cada sprint. 
 
-    ```bash
-    git push origin gustavodev
-    ```
+> Pipeline para homologação
+> 1: Instalar as dependenvias como o comando `install-dep` 
+> 2: Rodar a pipeline via comando `make pr-pipeline`
 
-> **Importante:** Para funcionalidades que precisam ser validadas, envie suas alterações tanto para a sua branch de desenvolvimento (`gustavodev`) quanto para a branch de homologação (`homolog`). A subida para a `master` ocorrerá ao final de cada sprint.
 
------
+## 3. Release ChangeLog
 
-## 6\. Pipeline de Homologação (CI/CD)
-
-Para garantir a qualidade e a integração contínua, execute a pipeline de pré-commit antes de enviar suas alterações.
-
-1.  **Instalar dependências (se necessário):**
-    *Este comando deve ser executado para instalar as bibliotecas Python do projeto.*
-
-    ```bash
-    make install-dep
-    ```
-
-    > **Nota:** É uma boa prática criar um ambiente virtual (`python -m venv .venv` e `source .venv/bin/activate`) antes de instalar as dependências localmente.
-
-2.  **Rodar a pipeline de verificação:**
-    *Este comando executa testes, linters e outras verificações de qualidade de código.*
-
-    ```bash
-    make pr-pipeline
-    ```
-
------
-
-## 7\. Arquitetura do Projeto
-
-A estrutura do projeto foi organizada para promover separação de responsabilidades, segurança e manutenibilidade.
-
-  - **Organização do Código:** Todo o código-fonte da aplicação está centralizado no diretório `app/`.
-  - **Acesso ao Banco de Dados:** A lógica de conexão e as configurações do banco de dados foram isoladas no diretório `db/`.
-  - **Segurança:** Chaves de API, tokens e senhas foram removidos do código e são gerenciados através de variáveis de ambiente em um arquivo `.env`.
-  - **Modelos de Dados:** A representação das tabelas do banco de dados (modelos) está definida no diretório `models/`.
-  - **Módulos Python:** Arquivos `__init__.py` foram adicionados aos diretórios para permitir que sejam tratados como pacotes, facilitando as importações relativas.
-  - **Otimização:** Os arquivos `.dockerignore` e `.gitignore` foram configurados para evitar que arquivos desnecessários (como logs, caches e dependências locais) sejam copiados para a imagem Docker ou versionados no Git, resultando em uma imagem menor e um repositório mais limpo.
+**Nome da Aplicação:** MindDesk
+**Versão:**  1.0.0
+**Commit Hash:** 81de186
+**Data de lançamento:** 19 de novembro de 2026
+**Descrição:**
