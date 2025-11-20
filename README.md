@@ -210,7 +210,11 @@ git push origin gustavodev
 ## 3. Release ChangeLog
 
 **Nome da Aplicação:** MindDesk
+
 **Versão:**  1.0.0
+
 **Commit Hash:** 81de186
+
 **Data de lançamento:** 19 de novembro de 2026
+
 **Descrição:**
