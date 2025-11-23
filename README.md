@@ -1,220 +1,118 @@
+# MindDesk
+
 ## 1. Sobre o Projeto
 
-## 2. Configuração do Ambiente de Desenvolvimento
+### Sobre a MindDesk
+A MindDesk é uma startup de tecnologia criada dentro da UniFecaf por um grupo de alunos de Análise e Desenvolvimento de Sistemas que compartilham uma visão comum: usar IA moderna, automação e agentes inteligentes para resolver problemas reais de eficiência nas empresas.
 
+Desde o início, o foco foi em um ponto crítico que atravessa organizações de todos os portes: o **RH está sobrecarregado** por processos manuais, informações dispersas e dependência constante de suporte humano. Nosso core é justamente atacar essa dor. Essencialmente, tratamos de transformar dúvidas corporativas em algo acessível, organizado e inteligente, elevando a produtividade de toda a organização.
 
-Este guia irá ajudá-lo a configurar corretamente seu ambiente de desenvolvimento para executar o projeto localmente utilizando Docker.
-
----
-
-### 2.1 Requisitos
-
-Certifique-se de ter os seguintes softwares instalados:
-
-- [Git](https://git-scm.com/downloads)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- Windows Subsystem for Linux (WSL) **atualizado**
-- [Chocolatey](https://chocolatey.org/install) (somente no Windows)
-- **Make** (instalado via Chocolatey no Windows, ou via gerenciadores de pacotes no Linux/macOS)
+### Nosso Time
+![Nosso time de colaboradores](static//images/logo.png)
 
 ---
 
-### 2.2 Instalação do Git
+### 1.1 Visão do Produto
+
+#### O Problema
+Organizações de grande porte (como Vale, IBM e Banco do Brasil) compartilham um desafio recorrente: **processos de onboarding ineficientes**. Profissionais recém-admitidos enfrentam diversas dúvidas sobre tarefas iniciais, procedimentos e documentos. Essa falta de clareza gera atrasos, dependência excessiva de funcionários experientes e sobrecarga no time de RH.
 
-1. Acesse o site: [https://git-scm.com/downloads](https://git-scm.com/downloads)
-2. Baixe e instale o Git para o seu sistema operacional.
-3. Durante a instalação no **Windows**, selecione a opção para **adicionar o Git ao PATH do sistema**.
-4. Após a instalação, confirme que está tudo certo:
-   ```bash
-   git --version
-   ```
-   
+> **Dado de Mercado:** Segundo a *HR Chief*, apenas 12% dos trabalhadores dizem que o onboarding de suas empresas funciona bem. Em um time de 40 pessoas, um onboarding lento pode gerar o equivalente a 12 meses de ociosidade acumulada ao ano.
 
-### 2.3 Instalação do Docker Desktop
+#### Proposta de Valor
+Desenvolvemos uma plataforma que centraliza todas as etapas do onboarding, tornando o processo estruturado e guiado. A solução inclui:
+* Gerenciamento de PDFs (documentos internos).
+* Consultas em linguagem natural via Chat.
+* Autonomia para o novo colaborador.
 
-1. Acesse: [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)  
-2. Baixe e instale o Docker Desktop para o seu sistema.  
-3. Reinicie o computador se for solicitado.  
+#### Produto Mínimo Viável (MVP)
+Nosso MVP é direcionado a PMEs que possuem processos de onboarding estabelecidos, mas dependem de interações humanas. A solução é escalável e modular, podendo evoluir para um portal completo de suporte operacional.
 
-### 2.4 Atualização do WSL (Windows Subsystem for Linux)
+#### Métricas de Sucesso
+* **Redução de 50%** no tempo total do processo de onboarding.
+* **Redução de 30%** no tempo perdido em ociosidade gerada por rotatividade.
+* Aceleração do início da produtividade dos novos funcionários.
 
-O Docker precisa que o WSL esteja atualizado.  
+---
 
-1. Abra o **PowerShell** como Administrador.  
-2. Execute o comando:  
+## 2. Arquitetura e Tecnologias
 
-    ```bash
-    wsl --update
-    ```
-    
+### Arquitetura do Sistema
+Optamos pelo padrão **MVC (Model–View–Controller)** devido à clara separação de responsabilidades entre backend e frontend.
+* **Linguagem:** Python 3.9.
+* **Containerização:** Docker (garantindo portabilidade entre macOS, Windows e Linux).
+* **Segurança:** Variáveis de ambiente protegidas dentro do container.
+* **Porta:** `8000`.
 
-### 2.5 Instalação do Chocolatey (Windows)
+#### Pipeline de Qualidade Local
+Embora não haja pipeline externo, implementamos processos locais rigorosos:
+1.  **Format:** Garante formatação consistente.
+2.  **Lint:** Análise estática (PEP8).
+3.  **Bandit:** Análise de segurança para identificar vulnerabilidades.
+4.  **Radon:** Verificação de complexidade ciclomática das funções.
 
-1. Abra o **PowerShell** como Administrador.  
-2. Execute o comando abaixo para instalar o Chocolatey:  
+### Front-end e UX
+A interface (concebida no Figma) foca em produtividade com identidade visual *Dark/Clean*.
+* **Fluxo Colaborador:** Acesso rápido ao Chat de Consulta.
+* **Fluxo Gerente:** Painel para upload de arquivos (Drag & Drop), gestão de funcionários e configurações.
 
-    ```powershell
-    Set-ExecutionPolicy Bypass -Scope Process -Force; `
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; `
-    iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    ```
+---
 
-### 2.6 Instalação do Make
+## 3. Banco de Dados
 
-#### 2.6.1 No Windows (via Chocolatey)
+Utilizamos o **Supabase (PostgreSQL)** gerenciado, com suporte nativo à extensão `pgvector` para combinar modelo relacional e busca semântica.
 
-Após instalar o Chocolatey, execute no PowerShell como Administrador:  
+### Dicionário de Tabelas
 
-    ```
-    choco install make -y
-    ```
+#### `pdf_vectors` (Busca Semântica)
+Armazena os chunks dos documentos processados e seus embeddings.
 
-Verifique:
+| Coluna | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | uuid | Identificador único de cada vetor gerado. |
+| `pdf_id` | int8 | ID do PDF (FK para `pdf_uploads`). |
+| `chunk_text` | text | Trecho de texto extraído e limpo. |
+| `embedding` | vector | Vetor gerado pelo modelo de IA. |
+| `chunk_index` | int4 | Posição sequencial do chunk no documento. |
+| `embedding_model_used` | text | Versão do modelo utilizado. |
+| `created_at` | timestamptz | Data de criação. |
 
-    ```
-    wsl --update
-    ```
+#### `pdf_uploads` (Gestão de Arquivos)
+Registro dos uploads realizados pelos administradores.
 
-#### 2.6.2 Em sistemas Unix (Linux/macOS)
+| Coluna | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | uuid | Identificador interno do upload. |
+| `user_id` | int8 | Usuário que enviou (FK). |
+| `file_name` | text | Nome original do arquivo. |
+| `file_path` | text | Caminho de armazenamento. |
+| `uploaded_at` | timestamptz | Data e hora do upload. |
+| `status` | text | Estado (pendente, processado, erro). |
 
-No Ubuntu/Debian:
+#### `users` (Controle de Acesso)
 
-    ```
-    sudo apt update && sudo apt install build-essential -y
-    ```
+| Coluna | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | int8 | Identificador interno da aplicação. |
+| `auth_user_id` | uuid | ID vinculado ao Auth do Supabase. |
+| `name` | text | Nome do usuário. |
+| `email` | text | E-mail de login. |
+| `role` | text | Função (ex.: gerente, colaborador). |
+| `ativo` | bool | Status do usuário. |
 
-No macOS (usando Homebrew):
+---
 
-    ```
-    brew install make
-    ```
+## 4. Inteligência Artificial e RAG
 
-### 2.7 Clonando o Projeto
+A camada de IA utiliza o padrão **RAG (Retrieval-Augmented Generation)**. O sistema não envia documentos inteiros para a IA a cada pergunta; ele recupera apenas os trechos relevantes do banco vetorial, reduzindo custos e alucinações.
 
-1. Acesse o repositório no GitHub.  
-2. Clique no botão verde **"Code"** e copie o link HTTPS (ex: `https://github.com/seu-usuario/seu-repositorio.git`).  
-3. No terminal, navegue até o diretório onde deseja clonar e execute:  
+### Fluxo de Ingestão e Consulta
+1.  **Upload:** Admin envia PDF/DOCX.
+2.  **Pré-processamento:** Uso da biblioteca **MuPDF** (escolhida por melhor performance em testes contra PyPDF2 e PDFMiner) para limpeza e extração.
+3.  **Vetorização:** Texto segmentado em chunks e transformado em embeddings.
+4.  **Busca:** A pergunta do usuário é vetorizada e comparada por similaridade no banco.
+5.  **Geração:** O LLM (**GPT-4 Mini**) gera a resposta baseada apenas nos trechos recuperados.
 
-```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-```
+> **Performance:** O motor de retorno vetorial combinado com GPT-4 Mini atingiu **~90% de acerto** nas respostas durante simulações.
 
-4. Acesse a pasta do projeto:
-
-```bash
-cd seu-repositorio
-```
-
-### 2.8 Executando o Projeto Localmente
-
-1. Verificando a Branch Atual
-
-```bash
-git branch
-```
-
-Se não estiver na branch correta, mude com:
-
-```bash
-git checkout gustavodev
-```
-
-2. Atualizando a Branch
-
-Atualize com as alterações do repositório remoto:
-
-```bash
-git pull origin master
-```
-
-O mesmo para uma segunda branch, chamada homolog (criar uma branch local chamada homolog e sincronizar com a origem):
-
-
-```bash
-git pull origin homolog
-```
-
-3. Comandos Docker via Make
-
-Com o Docker Desktop rodando, utilize os comandos abaixo na raiz do projeto:
-
-- Criar/Recriar a imagem:
-
-```bash
-make docker-build
-```
-
-- Rodar o container:
-
-```bash
-make docker-run
-```
-
-> A aplicação estará acessível em: http://localhost:8000
-
-- Parar o container:
-
-```bash
-make docker-stop
-```
-
-### 2.9 Subindo Alterações para o Repositório
-
-1. Verificar o status
-
-```bash
-Git status
-```
-
-2. Adicionar arquivos:
-
-- Para adicionar tudo:
-
-```bash
-Git add .
-```
-
-- Para adicionar arquivos específicos:
-
-```bash
-git add caminho/do/arquivo
-```
-
-3. Verificar novamente o status:
-
-```bash
-git status
-```
-
-4. Fazer o commit:
-
-```bash
-git commit -m "Descreva aqui o que foi alterado"
-```
-
-5. Enviar para sua branch:
-
-```bash
-git push origin gustavodev
-```
-
-> Para alterações funcionais, realize o commit para a sua branch, bem como para a branch de homolog.
-
-> As cargas de homolog subirão para a branch mastes ao final de cada sprint. 
-
-> Pipeline para homologação
-> 1: Instalar as dependenvias como o comando `install-dep` 
-> 2: Rodar a pipeline via comando `make pr-pipeline`
-
-
-## 3. Release ChangeLog
-
-**Nome da Aplicação:** MindDesk
-
-**Versão:**  1.0.0
-
-**Commit Hash:** 81de186
-
-**Data de lançamento:** 19 de novembro de 2026
-
-**Descrição:**
+---
