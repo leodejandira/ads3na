@@ -8,7 +8,9 @@ A MindDesk é uma startup de tecnologia criada dentro da UniFecaf por um grupo d
 Desde o início, o foco foi em um ponto crítico que atravessa organizações de todos os portes: o **RH está sobrecarregado** por processos manuais, informações dispersas e dependência constante de suporte humano. Nosso core é justamente atacar essa dor. Essencialmente, tratamos de transformar dúvidas corporativas em algo acessível, organizado e inteligente, elevando a produtividade de toda a organização.
 
 ### Nosso Time
-![Nosso time de colaboradores](./static/images/logo.png)
+<p align="center">
+  <img src="./static/images/logo.png" alt="Nosso time de colaboradores" width="200">
+</p>
 
 ---
 
