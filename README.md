@@ -52,9 +52,9 @@ O fluxo inicia com um mecanismo de login via **JWT (JSON Web Token)**, garantind
 #### Fluxo de Ingestão (Admin/Gerente)
 O upload de documentos é estruturado nas seguintes etapas:
 1.  **Upload de Documentos:** O administrador realiza o upload de documentos de onboarding (PDF, DOCX ou texto bruto), associando metadados (área, processo, prioridade).
-2.  **Limpeza e Segmentação:** Os arquivos passam pelo serviço de pré-processamento, que realiza extração de texto, correção de encoding, remoção de ruído e **chunking inteligente** (com tamanho e overlap configuráveis).
-3.  **Geração de Embeddings:** Para cada chunk, o embedding é gerado, os vetores são normalizados, e pesos/metadados são anexados.
-4.  **Armazenamento e Indexação:** O sistema salva texto e metadados no banco e persiste os vetores no `pgvector`, atualizando índices e estatísticas.
+2.  **Limpeza e Segmentação:** Os arquivos passam pelo serviço de pré-processamento, que realiza extração de texto, correção de encoding, remoção de ruído e chunking (particionamento textual).
+3.  **Geração de Embeddings:** Para cada chunk, o embedding é gerado, os vetores são normalizados, e metadados são anexados.
+4.  **Armazenamento e Indexação:** O sistema salva texto e metadados no banco e persiste os vetores na tabelada vetorial `pgvector`, atualizando índices de status para o texto salvo.
 
 ### 2.2 Pipeline de Qualidade Local
 Embora não haja pipeline externa, implementamos processos locais rigorosos para manter o padrão do código:
@@ -70,7 +70,6 @@ A interface da MindDesk foi projetada para ser simples, coerente e focada em pro
 * **Painel do Gerente:** Após a autenticação, direciona para o painel com funções essenciais: upload de PDF (com Drag & Drop ou seleção manual), gerenciamento de funcionários, acesso ao chat e logout. Uma tabela lista todos os arquivos enviados.
 * **Registro de Funcionários:** Formulário simples para adicionar novos colaboradores, seguido de uma tabela com lista de funcionários (ID, nome, e-mail, função e ações).
 * **Chat de Consulta:** Ambiente de consulta principal com barra lateral de navegação e painel central minimalista.
-* **Configurações:** Permite ao usuário gerenciar aspectos básicos da conta e do sistema, como limpar o histórico de conversas e alterar informações.
 
 ---
 
@@ -151,7 +150,7 @@ Além disso, avaliamos os principais modelos de RAG moderados dentro da bibliote
 
 
 #### Modelos de Linguagem (LLMs)
-Avaliamos alternativas como GPT, Gemini e DeepSeek. O motor de retorno vetorial, juntamente com o uso da LLM **GPT-4 Mini** para montagem da resposta, retornou resultados significativos.
+Como gerador final de resposta, opitamos por utilizar o modelo de LLM GPT-4 Mini, devido ao seu custo-beneficio e acessibilidade.
 
 > **Performance:** A combinação entre busca vetorial e GPT-4 Mini atingiu aproximadamente **90% de acerto** nas respostas produzidas nas simulações.
 
