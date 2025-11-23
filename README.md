@@ -152,6 +152,6 @@ Além disso, avaliamos os principais modelos de RAG moderados dentro da bibliote
 #### Modelos de Linguagem (LLMs)
 Como gerador final de resposta, opitamos por utilizar o modelo de LLM GPT-4 Mini, devido ao seu custo-beneficio e acessibilidade.
 
-> **Performance:** A combinação entre busca vetorial e GPT-4 Mini atingiu aproximadamente **90% de acerto** nas respostas produzidas nas simulações.
 
 ![Image](https://github.com/user-attachments/assets/3888ac52-75bf-4902-b06d-7777f3a46173)
+> **Performance:** A combinação entre busca vetorial e GPT-4 Mini atingiu aproximadamente **90% de acerto** nas respostas produzidas nas simulações.
