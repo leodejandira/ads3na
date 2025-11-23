@@ -9,7 +9,7 @@ Desde o início, o foco foi em um ponto crítico que atravessa organizações de
 
 ### Nosso Time
 <p align="center">
-  <img src="./static/images/logo.png" alt="Nosso time de colaboradores" width="200">
+  <img src="./static/images/time.png" alt="Nosso time de colaboradores" width="200">
 </p>
 
 ---
