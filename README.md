@@ -82,6 +82,8 @@ O banco foi projetado para manter **integridade**, aplicando chaves primárias e
 
 ### Dicionário de Tabelas
 
+<img width="733" height="521" alt="Image" src="https://github.com/user-attachments/assets/d2d67b5a-4013-40e3-a787-8bfab0703b4f" />
+
 #### `pdf_vectors` (Busca Semântica)
 Armazena os chunks dos documentos processados e seus embeddings.
 
@@ -139,11 +141,18 @@ A camada de IA utiliza o padrão **RAG (Retrieval-Augmented Generation)**, atuan
 #### Extração de Documentos (PDFs)
 Avaliamos as principais bibliotecas (MuPDF, PyPDF2, PDFPlumber, PDFMiner e Unstructured) em critérios como velocidade, precisão e consistência.
 
+<img width="816" height="521" alt="Image" src="https://github.com/user-attachments/assets/0b60859c-37fa-48f9-bd32-6c419f423e19" />
+
 > Os testes mostraram que **MuPDF** foi a biblioteca com **melhor equilíbrio** entre precisão e desempenho, sendo adotada como a solução padrão. Outras, como PyPDF2, demonstraram comportamentos atípicos (diversidade lexical elevada ou junções incorretas de palavras).
+
+Além disso, avaliamos os principais modelos de RAG moderados dentro da biblioteca transformer, com base em métricas de HIT e Precision. Sendo a **GTE-Small** a nossa escolha.
+
+![Image](https://github.com/user-attachments/assets/0f7793d8-eedf-45f5-919c-b7879d7d58cf)
+
 
 #### Modelos de Linguagem (LLMs)
 Avaliamos alternativas como GPT, Gemini e DeepSeek. O motor de retorno vetorial, juntamente com o uso da LLM **GPT-4 Mini** para montagem da resposta, retornou resultados significativos.
 
 > **Performance:** A combinação entre busca vetorial e GPT-4 Mini atingiu aproximadamente **90% de acerto** nas respostas produzidas nas simulações.
 
-*(Abaixo, você deve inserir a tabela de níveis de eficiência dos 5 principais modelos da biblioteca transformers, conforme mencionado em seu texto original.)*
+![Image](https://github.com/user-attachments/assets/3888ac52-75bf-4902-b06d-7777f3a46173)
