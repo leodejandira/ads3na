@@ -146,7 +146,7 @@ def list_pdfs(user_id: str = None, bucket_name: str = "pdfs"):
             query = query.eq("user_id", user_id)
 
         res = query.execute()
-        print(f"[DEBUG] Resposta da listagem: {res}")
+        print(f"[DEBUG] Listagem concluída: {len(res.data)} PDFs encontrados")
 
         if hasattr(res, "error") and res.error:
             raise HTTPException(

@@ -209,21 +209,21 @@ async function handleUpload() {
             if (result.processing) {
                 processingHTML = `
                     <div class="processing-info">
-                        <strong>Processamento Automático Concluído:</strong>
+                        <strong>Upload Concluído:</strong>
                         <div class="processing-step success">Upload do arquivo</div>
                         <div class="processing-step success">Extração de texto (${result.processing.pages} páginas)</div>
-                        <div class="processing-step success">Geração de embeddings (${result.processing.chunks_processed} chunks)</div>
-                        <div class="processing-step success">Modelo: ${result.processing.model_used}</div>
-                        <div class="processing-step success">Status: PDF pronto para consultas RAG</div>
+                        <div class="processing-step info">Geração de embeddings: Aguardando vetorização</div>
+                        <div class="processing-step info">Status: PDF aguardando vetorização para consultas RAG</div>
                     </div>
                 `;
             }
 
             showMessage(`
-                <strong>Upload e processamento realizados com sucesso!</strong><br>
+                <strong>Upload e extração de texto realizados com sucesso!</strong><br>
                 <strong>Nome do arquivo:</strong> ${result.file_name}<br>
                 <strong>Nome de exibição:</strong> ${result.display_name}<br>
-                <strong>URL assinada:</strong> <a href="${result.signed_url}" target="_blank" style="color: #3b82f6; text-decoration: underline;">Visualizar PDF</a>
+                <strong>URL assinada:</strong> <a href="${result.signed_url}" target="_blank" style="color: #3b82f6; text-decoration: underline;">Visualizar PDF</a><br>
+                <strong>Próximo passo:</strong> Clique em "Vetorizar" na tabela para gerar embeddings e habilitar consultas RAG.
             `, 'success');
 
             processingInfo.innerHTML = processingHTML;
@@ -363,7 +363,13 @@ async function processPdf(fileName) {
         const result = await response.json();
 
         if (response.ok) {
-            showMessage(`Arquivo vetorizado com sucesso!`, 'success');
+            showMessage(`
+                <strong>Vetorização concluída com sucesso!</strong><br>
+                <strong>Arquivo:</strong> ${fileName}<br>
+                <strong>Chunks processados:</strong> ${result.chunks_processed}<br>
+                <strong>Modelo usado:</strong> ${result.model_used}<br>
+                <strong>Status:</strong> PDF pronto para consultas RAG
+            `, 'success');
             loadPdfList(); // Recarrega a tabela para atualizar status
         } else {
             showMessage(`Erro ao processar: ${result.detail}`, 'error');
