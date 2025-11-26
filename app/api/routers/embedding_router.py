@@ -11,34 +11,11 @@ from supabase import create_client
 
 from app.core.config import EMBEDDING_MODEL_NAME, embedding_model
 from app.services.embedding_service import generate_embedding_for_pdf
+from app.services.auth_service import get_current_user
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 templates = Jinja2Templates(directory="templates")
 
-
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """
-    Decodifica o token JWT e retorna os dados do usuário atual.
-
-    Raises:
-        HTTPException:
-            - 401: Se o token estiver expirado ou for inválido.
-
-    Retorno:
-        dict: Payload decodificado do token JWT.
-    """
-    try:
-        payload = jwt.decode(
-            token,
-            "sua_chave_super_secreta",
-            algorithms=["HS256"],
-        )
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expirado")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token inválido")
 
 
 @router.post("/pdfs/embed")
