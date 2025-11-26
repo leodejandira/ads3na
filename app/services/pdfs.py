@@ -320,3 +320,69 @@ def download_pdf_and_extract_text(
         metadata["local_path"] = temp_path
 
     return full_text, metadata
+
+
+def upload_and_extract_text(
+    file_path: str,
+    display_name: str,
+    user_id: str,
+    bucket_name: str = "pdfs"
+):
+    """
+    Faz upload do PDF e extrai o texto, atualizando o banco com o texto extraído.
+    Combina upload_pdf + download_pdf_and_extract_text em uma operação.
+    """
+    try:
+        print(f"[DEBUG] Iniciando upload e extração para: {display_name}")
+        
+        # 1. Faz upload do PDF
+        upload_result = upload_pdf(
+            file_path=file_path,
+            display_name=display_name,
+            user_id=user_id,
+            bucket_name=bucket_name
+        )
+
+        # 2. Extrai texto do PDF recém-enviado
+        file_path_in_bucket = upload_result["file_name"]
+        
+        print(f"[DEBUG] Iniciando extração de texto do PDF: {display_name}")
+        full_text, meta = download_pdf_and_extract_text(
+            file_path=file_path_in_bucket,
+            bucket_name=bucket_name,
+            expire_seconds=3600,
+            save_temp=False,
+        )
+
+        # 3. Atualiza o registro com o texto extraído
+        SUPABASE_URL = os.environ.get("SUPABASE_URL")
+        SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
+        supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+        update_payload = {
+            "status": "processado",
+            "full_text": full_text,
+            "processed_at": meta.get("downloaded_at"),
+        }
+
+        update_res = (
+            supabase_admin.table("pdf_uploads")
+            .update(update_payload)
+            .eq("file_path", file_path_in_bucket)
+            .execute()
+        )
+
+        print(f"[DEBUG] Texto extraído e salvo ({meta.get('pages')} páginas).")
+
+        return {
+            **upload_result,
+            "processing": {
+                "text_extraction": "sucesso",
+                "pages": meta.get("pages", 0),
+                "embedding_generation": "pendente",
+            },
+        }
+
+    except Exception as e:
+        print(f"[ERROR] Erro no upload_and_extract_text: {e}")
+        raise
