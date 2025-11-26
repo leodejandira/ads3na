@@ -1,43 +1,17 @@
 from typing import List
 
-import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.templating import Jinja2Templates
 
 from app.api.schema.registros import Registro, RegistroCreate
-from app.services.auth_service import login
+from app.services.auth_service import login, get_current_user
 from app.services.register_service import (atualizar_registro, buscar_registro,
                                            deletar_registro, inserir_registro,
                                            listar_registros)
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 templates = Jinja2Templates(directory="templates")
-
-
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    """
-    Decodifica o token JWT e retorna os dados do usuário atual.
-
-    Raises:
-        HTTPException:
-            - 401: Se o token estiver expirado ou for inválido.
-
-    Retorno:
-        dict: Payload decodificado do token JWT.
-    """
-    try:
-        payload = jwt.decode(
-            token,
-            "sua_chave_super_secreta",
-            algorithms=["HS256"],
-        )
-        return payload
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expirado")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token inválido")
 
 
 @router.post("/register", response_model=Registro)
