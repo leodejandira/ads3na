@@ -11,6 +11,12 @@ from app.services.auth_service import get_current_user  # ← MUDANÇA AQUI
 from app.services.embedding_service import generate_embedding_for_pdf
 from app.services.pdfs import download_pdf_and_extract_text
 from app.services.pdfs import upload_pdf as upload_pdf_service
+from app.services.pdfs import (
+    download_pdf_and_extract_text, 
+    upload_pdf as upload_pdf_service,
+    list_pdfs,  # ← Adicionar
+    delete_pdf   # ← Adicionar
+)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -167,23 +173,10 @@ async def list_pdfs_route(user: dict = Depends(get_current_user)):
     - Outros usuários (se existir essa regra) veem apenas os próprios.
     """
     try:
-        SUPABASE_URL = os.environ.get("SUPABASE_URL")
-        SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
-        supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-        query = supabase_admin.table("pdf_uploads").select("*")
-
-        # Se quiser que apenas o gerente veja tudo, e outros só os seus:
-        if user.get("role") != "gerente":
-            query = query.eq("user_id", user["sub"])
-
-        db_res = query.execute()
-
-        if not db_res.data:
-            return {"message": "Nenhum PDF encontrado.", "pdfs": []}
-
-        return {"pdfs": db_res.data}
-
+        # Se não for gerente, filtra pelo user_id
+        user_id = None if user.get("role") == "gerente" else user["sub"]
+        pdfs = list_pdfs(user_id=user_id)
+        return {"pdfs": pdfs}
     except Exception as e:
         print(f"[ERROR] Erro ao listar PDFs: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao listar PDFs: {str(e)}")
@@ -201,39 +194,8 @@ async def delete_pdf_route(display_name: str, user: dict = Depends(get_current_u
         )
 
     try:
-        SUPABASE_URL = os.environ.get("SUPABASE_URL")
-        SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
-        supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-        # Busca o registro correspondente ao display_name
-        record = (
-            supabase_admin.table("pdf_uploads")
-            .select("id, file_path")
-            .eq("file_name", display_name)
-            .single()
-            .execute()
-        )
-
-        if not record.data:
-            raise HTTPException(status_code=404, detail="PDF não encontrado.")
-
-        file_path = record.data["file_path"]
-
-        # Remove do Storage
-        delete_res = supabase_admin.storage.from_("pdfs").remove([file_path])
-        print(f"[DEBUG] Resposta da exclusão no Storage: {delete_res}")
-
-        # Remove do banco
-        db_res = (
-            supabase_admin.table("pdf_uploads")
-            .delete()
-            .eq("id", record.data["id"])
-            .execute()
-        )
-        print(f"[DEBUG] Resposta da exclusão no banco: {db_res}")
-
-        return {"message": f"PDF '{display_name}' removido com sucesso."}
-
+        result = delete_pdf(display_name)
+        return result
     except Exception as e:
         print(f"[ERROR] Erro ao deletar PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")
