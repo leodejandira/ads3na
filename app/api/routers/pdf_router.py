@@ -8,17 +8,17 @@ from supabase import create_client
 
 from app.db.database import get_client
 from app.services.auth_service import get_current_user  # ← MUDANÇA AQUI
-from app.services.embedding_service import generate_embedding_for_pdf
-from app.services.pdfs import download_pdf_and_extract_text
-from app.services.pdfs import upload_pdf as upload_pdf_service
-from app.services.pdfs import (
+from app.services.rag_llm_service import generate_embedding_for_pdf
+from app.services.pdf_service import download_pdf_and_extract_text
+from app.services.pdf_service import upload_pdf as upload_pdf_service
+from app.services.pdf_service import (
     download_pdf_and_extract_text, 
     upload_pdf as upload_pdf_service,
     list_pdfs,  # ← Adicionar
     delete_pdf,
     upload_and_extract_text   # ← Adicionar
 )
-from app.services.embedding_service import generate_embedding_for_pdf
+from app.services.rag_llm_service import generate_embedding_for_pdf
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -140,58 +140,3 @@ async def delete_pdf_route(display_name: str, user: dict = Depends(get_current_u
         raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")
 
 
-@router.post("/pdfs/process")
-async def process_pdf_route(
-    body: dict = Body(...),
-    user: dict = Depends(get_current_user),
-):
-    """
-    Processa um PDF já enviado ao Supabase:
-    - Gera embeddings (vetorização)
-    - Atualiza o status para 'vetorizado'
-    """
-    if user.get("role") != "gerente":
-        raise HTTPException(
-            status_code=403,
-            detail="Acesso negado. Somente gerentes podem processar PDFs.",
-        )
-
-    file_name = body.get("file_name")
-    if not file_name:
-        raise HTTPException(
-            status_code=400, detail="Campo 'file_name' é obrigatório no corpo JSON."
-        )
-
-    print(f"[DEBUG] Iniciando vetorização do PDF: {file_name}")
-
-    try:
-        # 1. Gera embeddings (vetorização)
-        print("[DEBUG] Iniciando geração de embeddings...")
-        embed_result = generate_embedding_for_pdf(file_name)
-        print(f"[DEBUG] Embeddings gerados: {embed_result}")
-
-        # 2. Atualiza o status para 'vetorizado'
-        SUPABASE_URL = os.environ.get("SUPABASE_URL")
-        SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
-        supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-        update_res = (
-            supabase_admin.table("pdf_uploads")
-            .update({"status": "vetorizado"})
-            .eq("file_name", file_name)
-            .execute()
-        )
-
-        print(f"[DEBUG] Status atualizado para vetorizado: {update_res}")
-
-        return {
-            "message": f"PDF '{file_name}' vetorizado com sucesso!",
-            "chunks_processed": embed_result.get("chunks", 0),
-            "model_used": embed_result.get("model"),
-        }
-
-    except Exception as e:
-        print(f"[ERROR] Erro na vetorização do PDF: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Erro ao vetorizar PDF: {str(e)}"
-        )

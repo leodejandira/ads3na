@@ -6,7 +6,7 @@ from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from passlib.hash import bcrypt
 
-from app.services.register_service import buscar_por_email
+from app.services.user_menager_service import buscar_por_email
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM")

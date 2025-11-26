@@ -4,8 +4,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.api.routers import auth_router, embedding_router, pdf_router
-from app.api.routers import auth_router, users_router
+from app.api.routers import auth_router, pdf_router, rag_llm_router, users_meanger_router
+from app.api.routers import auth_router
 
 load_dotenv()
 
@@ -103,6 +103,6 @@ async def serve_chat_page(request: Request):
 
 app.include_router(auth_router.router, tags=["Autenticação"])
 app.include_router(pdf_router.router, tags=["PDFs"])
-app.include_router(embedding_router.router, tags=["Embeddings"])
+app.include_router(rag_llm_router.router, tags=["Embeddings"])
 app.include_router(auth_router.router, prefix="/auth")
-app.include_router(users_router.router)
+app.include_router(users_meanger_router.router)
