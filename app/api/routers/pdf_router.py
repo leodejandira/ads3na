@@ -11,6 +11,9 @@ from app.services.pdf_service import (
     delete_pdf,
     upload_and_extract_text   # ← Adicionar
 )
+from app.services.pdf_service2 import PDFService
+
+pdf_service = PDFService()
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -70,7 +73,12 @@ async def upload_pdf_route(
         print(f"Arquivo temporário criado em: {temp_file_path}")
 
         # 1. Chama o service que faz upload + extração de texto
-        result = upload_and_extract_text(
+        #  result = upload_and_extract_text(
+        #    file_path=temp_file_path,
+        #    display_name=file_display_name,
+        #    user_id=str(user_uuid),
+        # )
+        result = pdf_service.upload_and_extract_text(
             file_path=temp_file_path,
             display_name=file_display_name,
             user_id=str(user_uuid),
@@ -106,8 +114,9 @@ async def list_pdfs_route(user: dict = Depends(get_current_user)):
     try:
         # Se não for gerente, filtra pelo user_id
         user_id = None if user.get("role") == "gerente" else user["sub"]
-        pdfs = list_pdfs(user_id=user_id)
-        return {"pdfs": pdfs}
+        #pdfs = list_pdfs(user_id=user_id)
+        #return {"pdfs": pdfs}
+        return {"pdfs": pdf_service.list_pdfs(user_id=user_id)}
     except Exception as e:
         print(f"[ERROR] Erro ao listar PDFs: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao listar PDFs: {str(e)}")
@@ -125,8 +134,8 @@ async def delete_pdf_route(display_name: str, user: dict = Depends(get_current_u
         )
 
     try:
-        result = delete_pdf(display_name)
-        return result
+        #result = delete_pdf(display_name)
+        return pdf_service.delete_pdf(display_name)
     except Exception as e:
         print(f"[ERROR] Erro ao deletar PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")

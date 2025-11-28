@@ -8,7 +8,7 @@ TABLE_NAME = "users"
 
 class UserManagerService:
     """
-    Classe responsável por operaçõies de CRUD de usuários.
+    Classe responsável por operações de CRUD de usuários.
     """
 
     def __init__(self):
