@@ -29,8 +29,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(
             token,
-            "sua_chave_super_secreta",
-            algorithms=["HS256"],
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
         )
         return payload
     except jwt.ExpiredSignatureError:
