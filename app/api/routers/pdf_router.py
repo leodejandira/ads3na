@@ -1,24 +1,16 @@
 import os
 import tempfile
 from uuid import UUID
-
-from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.templating import Jinja2Templates
-from supabase import create_client
-
 from app.db.database import get_client
 from app.services.auth_service import get_current_user  # ← MUDANÇA AQUI
-from app.services.rag_llm_service import generate_embedding_for_pdf
-from app.services.pdf_service import download_pdf_and_extract_text
-from app.services.pdf_service import upload_pdf as upload_pdf_service
-from app.services.pdf_service import (
-    download_pdf_and_extract_text, 
+from app.services.pdf_service import ( 
     upload_pdf as upload_pdf_service,
     list_pdfs,  # ← Adicionar
     delete_pdf,
     upload_and_extract_text   # ← Adicionar
 )
-from app.services.rag_llm_service import generate_embedding_for_pdf
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -138,5 +130,3 @@ async def delete_pdf_route(display_name: str, user: dict = Depends(get_current_u
     except Exception as e:
         print(f"[ERROR] Erro ao deletar PDF: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao deletar PDF: {str(e)}")
-
-

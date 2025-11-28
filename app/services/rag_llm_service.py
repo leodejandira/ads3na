@@ -1,12 +1,9 @@
 import os
 from datetime import datetime
-
 from fastapi import HTTPException
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from supabase import create_client
-
 from app.core.config import EMBEDDING_MODEL_NAME, embedding_model
-
 import json
 import os
 import numpy as np
@@ -107,7 +104,8 @@ def query_rag_system(query: str):
         print(f"[DEBUG] Embedding da pergunta gerado com sucesso usando {EMBEDDING_MODEL_NAME}.")
     except Exception as e:
         print(f"[ERROR] Erro ao gerar embedding da consulta: {e}")
-        raise HTTPException(status_code=500, detail="Erro ao gerar embedding da pergunta.")
+        raise HTTPException(status_code=500,
+                            detail="Erro ao gerar embedding da pergunta.")
 
     # 2. Busca todos os vetores no banco
     try:
@@ -122,7 +120,8 @@ def query_rag_system(query: str):
         print(f"[DEBUG] {len(all_vectors)} vetores carregados do banco.")
     except Exception as e:
         print(f"[ERROR] Erro ao buscar vetores: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar vetores: {str(e)}")
+        raise HTTPException(status_code=500,
+                            detail=f"Erro ao buscar vetores: {str(e)}")
 
     # 3. Calcula similaridade entre a pergunta e os embeddings
     try:
@@ -142,7 +141,8 @@ def query_rag_system(query: str):
         print(f"[DEBUG] {len(top_matches)} trechos mais similares selecionados.")
     except Exception as e:
         print(f"[ERROR] Erro ao calcular similaridades: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro ao calcular similaridades: {str(e)}")
+        raise HTTPException(status_code=500,
+                            detail=f"Erro ao calcular similaridades: {str(e)}")
 
     # 4. Monta o contexto consolidado
     context = "\n\n".join([t[1] for t in top_matches])

@@ -33,10 +33,9 @@ def upload_pdf(
     esse retorno é adicionado no banco de dados,
     na tabela 'pdf_uploads'.
     """
-    # Cliente "anon" normal para upload no storage
+    
     supabase = get_client()
 
-    # Cliente admin para bypass RLS (usar a Service Role Key)
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
     SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_KEY_ROLE")
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -364,7 +363,7 @@ def upload_and_extract_text(
             "full_text": full_text,
             "processed_at": meta.get("downloaded_at"),
         }
-
+        # Verificar essa variavel, não esta sendo usado.
         update_res = (
             supabase_admin.table("pdf_uploads")
             .update(update_payload)
@@ -386,3 +385,4 @@ def upload_and_extract_text(
     except Exception as e:
         print(f"[ERROR] Erro no upload_and_extract_text: {e}")
         raise
+    
