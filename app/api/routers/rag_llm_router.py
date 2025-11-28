@@ -4,6 +4,9 @@ from fastapi.templating import Jinja2Templates
 
 from app.services.auth_service import get_current_user
 from app.services.rag_llm_service import generate_embedding_for_pdf, query_rag_system, process_pdf_embeddings
+from app.services.rag_llm_service2 import RagLLMService
+
+service = RagLLMService()
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -30,7 +33,8 @@ async def process_pdf_route(
             status_code=400, detail="Campo 'file_name' é obrigatório no corpo JSON."
         )
 
-    return process_pdf_embeddings(file_name)
+    # return process_pdf_embeddings(file_name)
+    return service.process_pdf_embeddings(file_name)
 
 @router.post("/pdfs/embed")
 async def embed_pdf_route(
@@ -53,7 +57,8 @@ async def embed_pdf_route(
 
     print(f"[DEBUG] Iniciando embeddings para '{file_name}' pelo usuário {user['email']}")
     result = generate_embedding_for_pdf(file_name)
-    return result
+    # return result
+    return service.generate_embedding_for_pdf(file_name)
 
 @router.post("/pdfs/query")
 async def query_pdf_route(
@@ -76,4 +81,5 @@ async def query_pdf_route(
             status_code=400, detail="Campo 'query' é obrigatório no corpo JSON."
         )
 
-    return query_rag_system(query)
+    # return query_rag_system(query)
+    return service.query_rag_system(query)
