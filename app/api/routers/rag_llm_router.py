@@ -1,4 +1,3 @@
-import os
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.templating import Jinja2Templates
 
@@ -65,13 +64,13 @@ async def query_pdf_route(
     Rota para realizar consultas RAG com base nos PDFs vetorizados.
     - Recebe o JSON: { "query": "texto da pergunta" }
     """
-    # 🔒 Validação de permissão - AGORA PERMITE GERENTES E USUÁRIOS
+    #  Validação de permissão - AGORA PERMITE GERENTES E USUÁRIOS
     if user.get("role") not in ["gerente", "usuario"]:
         raise HTTPException(
             status_code=403, detail="Somente usuários autenticados podem consultar PDFs."
         )
 
-    # 🔹 Captura e valida o campo da query
+    #  Captura e valida o campo da query
     query = body.get("query")
     if not query:
         raise HTTPException(
