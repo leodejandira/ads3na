@@ -5,8 +5,9 @@ import jwt
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from passlib.hash import bcrypt
+from app.services.user_menager_service import UserManagerService
+user_service = UserManagerService()
 
-from app.services.user_menager_service import buscar_por_email
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM")
@@ -87,7 +88,7 @@ def login(email: str, senha: str):
     """
     Função de login que valida o usuário e retorna o token.
     """
-    user = buscar_por_email(email)
+    user = user_service.buscar_por_email(email)
 
     if not user:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")

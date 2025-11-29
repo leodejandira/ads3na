@@ -2,11 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from app.api.schema.registros import Registro, RegistroCreate
 from app.services.auth_service import get_current_user
-from app.services.user_menager_service import (
-    atualizar_registro, buscar_registro, deletar_registro, 
-    inserir_registro, listar_registros
-)
-from app.services.user_menager_service2 import UserManagerService
+from app.services.user_menager_service import UserManagerService
 
 service = UserManagerService()
 
