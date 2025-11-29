@@ -2,15 +2,42 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import jwt
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
 from passlib.hash import bcrypt
+from app.services.user_menager_service import UserManagerService
+user_service = UserManagerService()
 
-from app.services.register_service import buscar_por_email
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ALGORITHM = os.environ.get("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
+# Adicionar o OAuth2 scheme aqui
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    """
+    Decodifica o token JWT e retorna os dados do usuário atual.
+
+    Raises:
+        HTTPException:
+            - 401: Se o token estiver expirado ou for inválido.
+
+    Retorno:
+        dict: Payload decodificado do token JWT.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+        )
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token inválido")
 
 def gerar_token(user):
     """
@@ -61,7 +88,7 @@ def login(email: str, senha: str):
     """
     Função de login que valida o usuário e retorna o token.
     """
-    user = buscar_por_email(email)
+    user = user_service.buscar_por_email(email)
 
     if not user:
         raise HTTPException(status_code=401, detail="Credenciais inválidas")

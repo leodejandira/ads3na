@@ -155,3 +155,10 @@ Como gerador final de resposta, opitamos por utilizar o modelo de LLM GPT-4 Mini
 
 ![Image](https://github.com/user-attachments/assets/3888ac52-75bf-4902-b06d-7777f3a46173)
 > **Performance:** A combinação entre busca vetorial e GPT-4 Mini atingiu aproximadamente **90% de acerto** nas respostas produzidas nas simulações.
+
+
+
+## 5. Próximos passos
+
+Uma vez estruturado, o projeto segue em testes controlados e refinamento. Estudos em campos como melhora de resposta gerada, aumento de velocidade de processamento e limpeza de código seguem em andamento. 
+Posterioremente, estuda-se a implementação real da primeira versão em ambiente oficial.

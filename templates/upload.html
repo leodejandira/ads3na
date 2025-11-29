@@ -43,11 +43,32 @@
 
             <div id="message" class="message"></div>
         </div>
+        
 
         <!-- Processing Info -->
         <div id="processingInfo" class="processing-info" style="display: none;"></div>
-    </div>
 
-    <script src="{{ url_for('static', path='js/upload.js') }}"></script>
+        <div class="pdf-list-container">
+            <h2>Arquivos Disponíveis</h2>
+            <div class="table-responsive">
+                <table class="pdf-table">
+                    <thead>
+                        <tr>
+                            <th>Nome do Arquivo</th>
+                            <th>Data de Envio</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdfTableBody">
+                        </tbody>
+                </table>
+                <p id="emptyTableMessage" style="text-align: center; color: #64748b; padding: 20px; display: none;">
+                    Nenhum PDF encontrado.
+                </p>
+            </div>
+        </div>
+
+    </div> <script src="{{ url_for('static', path='js/upload.js') }}"></script>
 </body>
 </html>

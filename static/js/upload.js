@@ -11,6 +11,10 @@ const displayName = document.getElementById('displayName');
 const messageDiv = document.getElementById('message');
 const processingInfo = document.getElementById('processingInfo');
 
+// Novos Elementos para a Tabela
+const pdfTableBody = document.getElementById('pdfTableBody');
+const emptyTableMessage = document.getElementById('emptyTableMessage');
+
 // Variável global para o token
 let token = localStorage.getItem('access_token');
 let selectedFile = null;
@@ -30,6 +34,8 @@ if (!token) {
         if (response.ok) {
             authCheck.style.display = 'none';
             container.style.display = 'block';
+            // Carrega a lista de PDFs assim que a tela é liberada
+            loadPdfList();
         } else {
             localStorage.removeItem('access_token');
             window.location.href = '/login';
@@ -203,21 +209,21 @@ async function handleUpload() {
             if (result.processing) {
                 processingHTML = `
                     <div class="processing-info">
-                        <strong>Processamento Automático Concluído:</strong>
+                        <strong>Upload Concluído:</strong>
                         <div class="processing-step success">Upload do arquivo</div>
                         <div class="processing-step success">Extração de texto (${result.processing.pages} páginas)</div>
-                        <div class="processing-step success">Geração de embeddings (${result.processing.chunks_processed} chunks)</div>
-                        <div class="processing-step success">Modelo: ${result.processing.model_used}</div>
-                        <div class="processing-step success">Status: PDF pronto para consultas RAG</div>
+                        <div class="processing-step info">Geração de embeddings: Aguardando vetorização</div>
+                        <div class="processing-step info">Status: PDF aguardando vetorização para consultas RAG</div>
                     </div>
                 `;
             }
 
             showMessage(`
-                <strong>Upload e processamento realizados com sucesso!</strong><br>
+                <strong>Upload e extração de texto realizados com sucesso!</strong><br>
                 <strong>Nome do arquivo:</strong> ${result.file_name}<br>
                 <strong>Nome de exibição:</strong> ${result.display_name}<br>
-                <strong>URL assinada:</strong> <a href="${result.signed_url}" target="_blank" style="color: #3b82f6; text-decoration: underline;">Visualizar PDF</a>
+                <strong>URL assinada:</strong> <a href="${result.signed_url}" target="_blank" style="color: #3b82f6; text-decoration: underline;">Visualizar PDF</a><br>
+                <strong>Próximo passo:</strong> Clique em "Vetorizar" na tabela para gerar embeddings e habilitar consultas RAG.
             `, 'success');
 
             processingInfo.innerHTML = processingHTML;
@@ -226,6 +232,10 @@ async function handleUpload() {
             // Reset form
             removeFile();
             displayName.value = '';
+
+            // Atualiza a tabela com o novo arquivo
+            loadPdfList();
+
         } else {
             showMessage(`Erro: ${result.detail || 'Erro no upload'}`, 'error');
         }
@@ -235,6 +245,138 @@ async function handleUpload() {
     } finally {
         uploadBtn.disabled = false;
         uploadBtn.textContent = 'Fazer Upload';
+    }
+}
+
+// ==========================================
+// FUNÇÕES DA TABELA DE PDFS
+// ==========================================
+
+async function loadPdfList() {
+    try {
+        const response = await fetch('/pdfs', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            renderTable(data.pdfs || []);
+        } else {
+            console.error('Erro ao listar PDFs');
+        }
+    } catch (error) {
+        console.error('Erro na requisição da lista:', error);
+    }
+}
+
+function renderTable(pdfs) {
+    pdfTableBody.innerHTML = '';
+    
+    if (pdfs.length === 0) {
+        emptyTableMessage.style.display = 'block';
+        return;
+    }
+    
+    emptyTableMessage.style.display = 'none';
+
+    pdfs.forEach(pdf => {
+        const row = document.createElement('tr');
+        
+        // Formatar data
+        const dateObj = new Date(pdf.created_at || Date.now());
+        const dateStr = dateObj.toLocaleDateString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        const status = pdf.status || 'pendente';
+        
+        // Lógica de exibição do botão: some apenas se 'vetorizado'
+        const isVectorized = status === 'vetorizado';
+        
+        const processBtnHtml = !isVectorized 
+            ? `<button class="btn-sm btn-process" onclick="processPdf('${pdf.file_name}')">
+                 <i class='bx bx-cog'></i> Vetorizar
+               </button>` 
+            : '';
+
+        row.innerHTML = `
+            <td><strong>${pdf.file_name}</strong></td>
+            <td>${dateStr}</td>
+            <td><span class="status-badge ${status}">${status}</span></td>
+            <td>
+                <div class="action-buttons">
+                    ${processBtnHtml}
+                    <button class="btn-sm btn-delete" onclick="deletePdf('${pdf.file_name}')">
+                        <i class='bx bx-trash'></i> Deletar
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        pdfTableBody.appendChild(row);
+    });
+}
+
+async function deletePdf(fileName) {
+    if (!confirm(`Tem certeza que deseja deletar o arquivo "${fileName}"?`)) return;
+
+    try {
+        const response = await fetch(`/pdfs/${encodeURIComponent(fileName)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            showMessage(`Arquivo "${fileName}" deletado com sucesso.`, 'success');
+            loadPdfList(); // Recarrega a tabela
+        } else {
+            const res = await response.json();
+            showMessage(`Erro ao deletar: ${res.detail}`, 'error');
+        }
+    } catch (error) {
+        console.error(error);
+        showMessage('Erro de conexão ao deletar arquivo.', 'error');
+    }
+}
+
+async function processPdf(fileName) {
+    // Feedback visual imediato
+    showMessage(`Iniciando vetorização de "${fileName}"...`, 'success');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    try {
+        const response = await fetch('/pdfs/process', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ file_name: fileName })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            showMessage(`
+                <strong>Vetorização concluída com sucesso!</strong><br>
+                <strong>Arquivo:</strong> ${fileName}<br>
+                <strong>Chunks processados:</strong> ${result.chunks_processed}<br>
+                <strong>Modelo usado:</strong> ${result.model_used}<br>
+                <strong>Status:</strong> PDF pronto para consultas RAG
+            `, 'success');
+            loadPdfList(); // Recarrega a tabela para atualizar status
+        } else {
+            showMessage(`Erro ao processar: ${result.detail}`, 'error');
+        }
+    } catch (error) {
+        console.error(error);
+        showMessage('Erro de conexão ao processar arquivo.', 'error');
     }
 }
 
