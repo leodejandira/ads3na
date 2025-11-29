@@ -15,7 +15,6 @@ def register_route(novo_usuario: RegistroCreate, user: dict = Depends(get_curren
             status_code=403,
             detail="Apenas gerentes podem registrar novos usuários.",
         )
-    # return inserir_registro(novo_usuario)
     return service.inserir_registro(novo_usuario)
 
 @router.get("/usuarios", response_model=List[Registro])
@@ -26,7 +25,6 @@ def listar_usuarios_route(user: dict = Depends(get_current_user)):
             detail="Apenas gerentes podem listar usuários.",
         )
     try:
-        # return listar_registros()
         return service.listar_registros()
     except HTTPException as e:
         raise e
@@ -41,7 +39,6 @@ def buscar_usuario_route(registro_id: int, user: dict = Depends(get_current_user
             detail="Apenas gerentes podem buscar usuários.",
         )
     try:
-        # usuario = buscar_registro(registro_id)
         usuario = service.buscar_registro(registro_id)
         if not usuario:
             raise HTTPException(status_code=404, detail="Usuário não encontrado.")
@@ -59,7 +56,6 @@ def atualizar_usuario_route(registro_id: int, name: str, email: str, user: dict 
             detail="Apenas gerentes podem atualizar usuários.",
         )
     try:
-        # return atualizar_registro(registro_id, name, email)
         return service.atualizar_registro(registro_id, name, email)
     except HTTPException as e:
         raise e
@@ -74,7 +70,6 @@ def deletar_usuario_route(registro_id: int, user: dict = Depends(get_current_use
             detail="Apenas gerentes podem deletar usuários.",
         )
     try:
-        # return deletar_registro(registro_id)
         return service.deletar_registro(registro_id)
     except HTTPException as e:
         raise e
